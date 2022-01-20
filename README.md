@@ -14,8 +14,6 @@ In this course, we expect basic knowledge of python programming and git. To refr
 In this course, all assignments are given in python. You can do the assignments on the following resources:
 
 - Your own computer: Follow our [python setup instructions](python_setup_instructions.md) to setup your own environment
-- Cybele computers: The environment is already setup for you, check out our [practical information](working_on_cybele_computers.md) on how to work on these computers
-- Using our server: The environment is already setup for you here as well. Check out [our server tutorial](cluster_tutorial/cluster_info.md) on how to get started.
 
 ### Download the starter code
 
