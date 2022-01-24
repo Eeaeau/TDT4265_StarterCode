@@ -1,3 +1,4 @@
+from matplotlib import axes
 import numpy as np
 import utils
 np.random.seed(1)
@@ -13,6 +14,13 @@ def pre_process_images(X: np.ndarray):
     assert X.shape[1] == 784,\
         f"X.shape[1]: {X.shape[1]}, should be 784"
     # TODO implement this function (Task 2a)
+
+    X /= 255
+
+    # could use numpy.linalg.norm
+
+    X = np.concatenate(([1], X), axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
+
     return X
 
 
@@ -25,10 +33,28 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
         Cross entropy error (float)
     """
     # TODO implement this function (Task 2a)
+    N = len(targets)
+    Cn = np.empty(N)
+
+    for n in range(N):
+        y = targets[n]
+        y_hat = outputs[n]
+
+        Cn[n] = -(y*np.ln(y_hat)+(1+y)*np.ln(1-y_hat))
+
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    return 0
 
+    return 1/N*np.sum(Cn)
+
+def sigmoid(x):
+    """
+    Args:
+        x: float
+    Returns:
+        corresponding sigmoid value
+    """
+    return 1/(1 + np.exp(-x))
 
 class BinaryModel:
 
@@ -46,7 +72,13 @@ class BinaryModel:
             y: output of model with shape [batch size, 1]
         """
         # TODO implement this function (Task 2a)
-        return None
+        batch_size = X.shape(0)
+        y = np.empty(batch_size)
+
+        for i in range (batch_size):
+            y[i] = sigmoid(self.w.dot(X[i]))
+
+        return y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -69,7 +101,7 @@ class BinaryModel:
 
 def gradient_approximation_test(model: BinaryModel, X: np.ndarray, Y: np.ndarray):
     """
-        Numerical approximation for gradients. Should not be edited. 
+        Numerical approximation for gradients. Should not be edited.
         Details about this test is given in the appendix in the assignment.
     """
     w_orig = np.random.normal(loc=0, scale=1/model.w.shape[0]**2, size=model.w.shape)
