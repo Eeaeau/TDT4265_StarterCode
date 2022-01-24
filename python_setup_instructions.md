@@ -21,7 +21,7 @@ source activate tdt4265
 To exit, you can simply close the window, or run
 
 ```bash
-source deactivate tdt419tdt42655
+source deactivate tdt4265
 ```
 
 Note that every time you want to work on the assignment, you should run `source activate tdt4265` (change to the name of your virtual env).
