@@ -17,17 +17,29 @@ def pre_process_images(X: np.ndarray):
     # TODO implement this function (Task 2a)
 
     # centering around zero and normalizing by std
-    X = stats.zscore(X)
-    # centering around zero and normalizing
-    # X -= np.mean(X)
-    # X /= np.max(np.abs(X))
+    # X = stats.zscore(X)
 
     # could use numpy.linalg.norm
 
     # X = np.concatenate(([1], X), axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
-    X = np.append(X, 1, axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
+    print('shape:', X.shape)
+    # X = np.concatenate((X, 1), axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
+    # X = np.append(X, [1])
+    # X_norm = np.ones((X.shape[0], X.shape[1]+1))
 
-    return X
+    bias = np.ones(X.shape[0])
+
+    X_norm = np.concatenate((X, bias.T), axis=1)
+
+    # centering around zero and normalizing
+    # X_norm[:-1] = X_norm[:-1] - float(np.mean(X))
+    # X_norm[:-1] = X_norm[:-1] / np.max(np.abs(X))
+
+    # X_norm[:,-1] = 1.0
+
+    return X_norm
+
+    # return X
 
 
 def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
@@ -39,19 +51,21 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
         Cross entropy error (float)
     """
     # TODO implement this function (Task 2a)
-    N = len(targets)
-    Cn = np.empty(N)
-
-    for n in range(N):
-        y = targets[n]
-        y_hat = outputs[n]
-
-        Cn[n] = -(y*np.log(y_hat)+(1+y)*np.log(1-y_hat))
 
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
 
-    return 1/N*np.sum(Cn)
+    N = targets.shape(0)
+    # Cn = np.empty(N)
+    # for n in range(N):
+    #     y = targets[n]
+    #     y_hat = outputs[n]
+
+    #     Cn[n] = -(y*np.log(y_hat)+(1+y)*np.log(1-y_hat))
+
+
+    C = -(targets*np.log(outputs)+(1+targets)*np.log(1-outputs))
+    return 1/N*C
 
 def sigmoid(x):
     """
@@ -104,19 +118,19 @@ class BinaryModel:
         batch_size = X.shape(0)
         outputs = np.empty(batch_size)
 
-        # for k in range(self.grad.shape(0)):
-        #     for i in range(self.I):
-        #         self.grad[] += -(targets[k]-outputs[k])*X[i]
-        #     self.w[k, i] =/
-
+        print('grad ', self.grad.shape)
         for n in range(batch_size):
-            self.grad += -1/self.I(targets-outputs)*X
+            self.grad += -1/self.I*(targets-outputs)*X
 
         self.grad /= batch_size
 
         nabla = 1
+        print('X ', X.shape)
+        print('outputs ', outputs.shape)
+        print('targets ', targets.shape)
 
         self.w = self.w-nabla*self.grad
+        print('w ', self.w.shape)
 
     def zero_grad(self) -> None:
         self.grad = None
