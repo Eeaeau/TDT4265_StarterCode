@@ -10,11 +10,17 @@ def pre_process_images(X: np.ndarray):
     Returns:
         X: images of shape [batch size, 785] in the range (-1, 1)
     """
+    
     assert X.shape[1] == 784,\
         f"X.shape[1]: {X.shape[1]}, should be 784"
     # TODO implement this function (Task 2a)
-    
-    return X
+    #note that the use of 127.5 comes from half of 255, so values under half will negative
+    #try and find a faster method, mb use np.linalg or something
+    X_norm = np.zeros((X.shape[0],X.shape[1]+1))
+    for idx, b in enumerate(X):
+        X_norm[idx,:-1] = (b/127.5) - 1.0
+    X_norm[:,-1] = 1.0
+    return X_norm
 
 
 def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
@@ -26,9 +32,12 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
         Cross entropy error (float)
     """
     # TODO implement this function (Task 2a)
+    
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    return 0
+
+    cel = - (targets * np.log(outputs) + (1-targets)*np.log(1-outputs)) # do i need to take the mean her?
+    return cel
 
 
 class BinaryModel:
@@ -47,7 +56,9 @@ class BinaryModel:
             y: output of model with shape [batch size, 1]
         """
         # TODO implement this function (Task 2a)
-        return None
+        #using the sigmoid function, could have used self.w@X also 
+        y = 1/(1 + np.exp(- np.matmul(X,self.w)))
+        return y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -58,9 +69,19 @@ class BinaryModel:
             targets: labels/targets of each image of shape: [batch size, 1]
         """
         # TODO implement this function (Task 2a)
+
         assert targets.shape == outputs.shape,\
             f"Output shape: {outputs.shape}, targets: {targets.shape}"
+        batch_size = targets.shape[0]
         self.grad = np.zeros_like(self.w)
+        t = np.matmul((targets-outputs).reshape(batch_size), X).reshape(X.shape[1],1)/batch_size
+        print(t.shape)
+        print(self.grad.shape)
+        print(targets.shape)
+        print(outputs.shape)
+        print(X.shape)
+        self.grad = -np.matmul((targets-outputs).reshape(batch_size), X).reshape(X.shape[1],1)
+        #self.grad = -np.matmul(X,(targets-outputs)) #need to reshape, grad shape is (785,1), target and output shape is (100,1), X shape is (100,785)
         assert self.grad.shape == self.w.shape,\
             f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
 
