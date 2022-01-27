@@ -24,7 +24,8 @@ def pre_process_images(X: np.ndarray):
 
     # could use numpy.linalg.norm
 
-    X = np.concatenate(([1], X), axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
+    # X = np.concatenate(([1], X), axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
+    X = np.append(X, 1, axis=0) # appears to be the fastest method https://stackoverflow.com/questions/36998260/prepend-element-to-numpy-array
 
     return X
 
@@ -45,7 +46,7 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
         y = targets[n]
         y_hat = outputs[n]
 
-        Cn[n] = -(y*np.ln(y_hat)+(1+y)*np.ln(1-y_hat))
+        Cn[n] = -(y*np.log(y_hat)+(1+y)*np.log(1-y_hat))
 
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
@@ -65,7 +66,7 @@ class BinaryModel:
 
     def __init__(self):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
         self.w = np.zeros((self.I, 1))
         self.grad = None
 
@@ -103,12 +104,19 @@ class BinaryModel:
         batch_size = X.shape(0)
         outputs = np.empty(batch_size)
 
-        for k in range(self.grad.shape(0)):
-            delta = 0
-            for i in range(batch_size):
-                delta += -X[i]*(targets[k]-outputs[k])
-            self.w[k, i] =/
+        # for k in range(self.grad.shape(0)):
+        #     for i in range(self.I):
+        #         self.grad[] += -(targets[k]-outputs[k])*X[i]
+        #     self.w[k, i] =/
 
+        for n in range(batch_size):
+            self.grad += -1/self.I(targets-outputs)*X
+
+        self.grad /= batch_size
+
+        nabla = 1
+
+        self.w = self.w-nabla*self.grad
 
     def zero_grad(self) -> None:
         self.grad = None
