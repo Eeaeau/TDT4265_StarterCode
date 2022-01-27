@@ -1,5 +1,6 @@
 from matplotlib import axes
 import numpy as np
+import scipy.stats as stats
 import utils
 np.random.seed(1)
 
@@ -15,7 +16,11 @@ def pre_process_images(X: np.ndarray):
         f"X.shape[1]: {X.shape[1]}, should be 784"
     # TODO implement this function (Task 2a)
 
-    X /= 255
+    # centering around zero and normalizing by std
+    X = stats.zscore(X)
+    # centering around zero and normalizing
+    # X -= np.mean(X)
+    # X /= np.max(np.abs(X))
 
     # could use numpy.linalg.norm
 
@@ -94,6 +99,16 @@ class BinaryModel:
         self.grad = np.zeros_like(self.w)
         assert self.grad.shape == self.w.shape,\
             f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
+
+        batch_size = X.shape(0)
+        outputs = np.empty(batch_size)
+
+        for k in range(self.grad.shape(0)):
+            delta = 0
+            for i in range(batch_size):
+                delta += -X[i]*(targets[k]-outputs[k])
+            self.w[k, i] =/
+
 
     def zero_grad(self) -> None:
         self.grad = None
