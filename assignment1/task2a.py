@@ -13,6 +13,7 @@ def pre_process_images(X: np.ndarray):
     assert X.shape[1] == 784,\
         f"X.shape[1]: {X.shape[1]}, should be 784"
     # TODO implement this function (Task 2a)
+    
     return X
 
 
@@ -34,7 +35,7 @@ class BinaryModel:
 
     def __init__(self):
         # Define number of input nodes
-        self.I = None
+        self.I = 785 #could later use length of input + bias
         self.w = np.zeros((self.I, 1))
         self.grad = None
 
