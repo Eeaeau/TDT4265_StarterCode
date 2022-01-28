@@ -29,5 +29,5 @@ You can also download this repository as a zip file and unzip it on your compute
 **There might be minor typos or minor alterations to the starter code**. If this happens, we will notify you on blackboard and you can update your starter code by doing (In your assignment directory):
 
 ```
-git pull origin master
+git pull origin main
 ```
