@@ -52,18 +52,19 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
 
     #     Cn[n] = -(y*np.log(y_hat)+(1+y)*np.log(1-y_hat))
 
-    Cn = -(
-        np.multiply(targets, np.log(outputs))
-        + np.multiply((1 + targets), np.log(1 - outputs))
-    )
+    # Cn = targets * np.log(outputs) + (1 - targets) * np.log(1 - outputs)
 
-    Cn = targets * np.log(outputs) + (1 - targets) * np.log(1 - outputs)
+    # C = 1 / batch_size * np.sum(Cn, axis=0)[0]
+
+    C = (
+        1
+        / batch_size
+        * (targets.T @ np.log(outputs) + (1 - targets).T @ np.log(1 - outputs))
+    )
 
     assert (
         targets.shape == outputs.shape
     ), f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-
-    C = 1 / batch_size * np.sum(Cn, axis=0)[0]
 
     return C
 
