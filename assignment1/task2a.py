@@ -46,11 +46,11 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
 
     batch_size = targets.shape[0]
 
-    C = (
+    C = -(
         1
         / batch_size
         * (targets.T @ np.log(outputs) + (1 - targets).T @ np.log(1 - outputs))
-    )
+    )[0, 0]
 
     assert (
         targets.shape == outputs.shape
@@ -59,7 +59,7 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
     return C
 
 
-def sigmoid(x):
+def sigmoid(x: np.ndarray):
     """
     Args:
         x: ndarray
@@ -107,7 +107,7 @@ class BinaryModel:
 
         batch_size = X.shape[0]
 
-        self.grad = 1 / batch_size * np.matmul(X.T, (targets - outputs))
+        self.grad = -1 / batch_size * np.matmul(X.T, (targets - outputs))
 
         assert (
             self.grad.shape == self.w.shape
