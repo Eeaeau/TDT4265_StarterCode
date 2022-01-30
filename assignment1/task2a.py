@@ -25,11 +25,11 @@ def pre_process_images(X: np.ndarray):
 
     for idx, val in enumerate(X):
 
-        X_norm[idx, :-1] = (val / peak) - 1
+        X_norm[idx, :-1] = (2 * val / peak) - 1
 
     X_norm[:, -1] = 1.0
 
-    print(np.min(X_norm))
+    # print(np.min(X_norm))
 
     return X_norm
 
@@ -45,16 +45,6 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
     # TODO implement this function (Task 2a)
 
     batch_size = targets.shape[0]
-    # Cn = np.empty(N)
-    # for n in range(N):
-    #     y = targets[n]
-    #     y_hat = outputs[n]
-
-    #     Cn[n] = -(y*np.log(y_hat)+(1+y)*np.log(1-y_hat))
-
-    # Cn = targets * np.log(outputs) + (1 - targets) * np.log(1 - outputs)
-
-    # C = 1 / batch_size * np.sum(Cn, axis=0)[0]
 
     C = (
         1
@@ -88,7 +78,7 @@ class BinaryModel:
 
     def forward(self, X: np.ndarray) -> np.ndarray:
         """
-        Args:
+        # Args:
             X: images of shape [batch size, 785]
         Returns:
             y: output of model with shape [batch size, 1]
@@ -116,24 +106,8 @@ class BinaryModel:
         self.grad = np.zeros_like(self.w)
 
         batch_size = X.shape[0]
-        # outputs = np.empty(batch_size)
-
-        # print("grad ", self.grad.shape)
-
-        # for n in range(batch_size):
-        #     tmp = -((targets[n] - outputs[n]) * X[n]).reshape((self.I, 1))
-        #     # print("tmp:", tmp.shape)
-        #     self.grad += tmp
 
         self.grad = 1 / batch_size * np.matmul(X.T, (targets - outputs))
-
-        # self.grad = -np.matmul((targets - outputs).reshape(batch_size), X).reshape(
-        #     X.shape[1], 1
-        # )
-
-        # nabla = 1
-        # print("X ", X.shape)
-        # print("w ", self.w.shape)
 
         assert (
             self.grad.shape == self.w.shape
