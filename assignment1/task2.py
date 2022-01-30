@@ -1,3 +1,4 @@
+#from turtle import forward
 import numpy as np
 import utils
 import matplotlib.pyplot as plt
@@ -16,7 +17,13 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray, model: BinaryModel) -
         Accuracy (float)
     """
     # TODO Implement this function (Task 2c)
-    accuracy = 0.0
+    #accuracy is number of correct prediction/total number of predictions. 
+    #since its a binaray model the answer is either 1 or 0, 1 and 0 will be true or false in boolean terms. 
+    #if the modelforward >= 0.5 then it predicts that the number is from "2" category.
+    
+    predictions = (model.forward(X) >= 0.5)
+    # Counting everytime prediction equals target. Then divding by batch size
+    accuracy = np.count_nonzero(predictions == targets)/X.shape[0]
     return accuracy
 
 
@@ -35,7 +42,11 @@ class LogisticTrainer(BaseTrainer):
             loss value (float) on batch
         """
         # TODO: Implement this function (task 2b)
-        loss = 0
+        out_forward = self.model.forward(X_batch) #forward pass
+        self.model.backward(X_batch, out_forward, Y_batch) #backward pass
+        #now we need to update the weights from the backward pass, w =
+        self.model.w -= self.model.grad * self.learning_rate #not sure if we actually need the self. since learning rate is defined in main, but should have it.
+        loss = cross_entropy_loss(Y_batch,out_forward)
         return loss
 
     def validation_step(self):
