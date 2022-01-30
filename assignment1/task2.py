@@ -78,7 +78,7 @@ class LogisticTrainer(BaseTrainer):
 
 if __name__ == "__main__":
     # hyperparameters DO NOT CHANGE IF NOT SPECIFIED IN ASSIGNMENT TEXT
-    num_epochs = 50
+    num_epochs = 500
     learning_rate = 0.05
     batch_size = 128
     shuffle_dataset = False
