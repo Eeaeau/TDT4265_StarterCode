@@ -74,8 +74,8 @@ class BaseTrainer:
             loss={},
             accuracy={}
         )
-        counter = 0
-        prev_best_loss = np.inf
+        best_loss = np.inf #starting with maximum as best loss
+        repetitive_worse = 0 #number of times the loss has been worse than best
         global_step = 0
         for epoch in range(num_epochs):
             train_loader = utils.batch_loader(
@@ -94,18 +94,15 @@ class BaseTrainer:
 
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
-                    if self.stop_count:
-                        # No improvement
-                        if prev_best_loss < val_loss:
-                            counter += 1
-                        else:
-                            counter = 0
-                            prev_best_loss = val_loss
-                            
-                        # We have reached max number of passes trough dataset without improvement
-                        if counter == self.stop_count:
-                            print(f"We went trough {epoch} of {num_epochs} before stopping")
-                            return train_history, val_history
+                    if val_history["loss"][global_step] < best_loss:
+                        best_loss = val_history["loss"][global_step]
+                        repetitive_worse = 0
+                    else:
+                        repetitive_worse += 1
+
+                    if repetitive_worse == self.stop_count:
+                        print(f"We went trough {epoch} of {num_epochs} before stopping")
+                        return train_history, val_history
                     # if(global_step >= num_steps_per_val*self.stop_count and val_history["loss"][global_step] >= val_history["loss"][global_step-(num_steps_per_val*self.stop_count)]):
                     #     print(f'Training stopped after {epoch} epochs. {epoch}/{num_epochs} total')
                     #     return train_history, val_history

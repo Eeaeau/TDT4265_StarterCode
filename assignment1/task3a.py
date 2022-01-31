@@ -22,10 +22,10 @@ class SoftmaxModel:
 
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
 
         # Define number of output nodes
-        self.num_outputs = None
+        self.num_outputs = 10
         self.w = np.zeros((self.I, self.num_outputs))
         self.grad = None
 
@@ -38,8 +38,13 @@ class SoftmaxModel:
         Returns:
             y: output of model with shape [batch size, num_outputs]
         """
+        
         # TODO implement this function (Task 3a)
-        return None
+        #@ calls the matmul function
+        print(X.shape)
+        y = (np.exp(X@self.w))/(np.sum(np.exp(X@self.w), axis=1))[:,None]
+        print(y.shape)
+        return y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -72,7 +77,21 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
         Y: shape [Num examples, num classes]
     """
     # TODO implement this function (Task 3a)
-    raise NotImplementedError
+    #creating the new shape of Y, specifying it should be a int.
+    #inspiration from keras lib method. 
+    n = Y.shape[0]
+    # input_shape = Y.shape
+    # if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
+    #     input_shape = tuple(input_shape[:-1])   
+    encoded = np.zeros((n,num_classes),dtype=int)
+    #encoded[] = 1
+    #print(f'n: {np.arange(n)}')
+    #print(f'Y: {Y.flatten()}')
+    encoded[np.arange(n), Y.ravel()] = 1
+    #output_shape = input_shape + (num_classes,)
+    #encoded = np.reshape(encoded, output_shape)
+    
+    return encoded
 
 
 def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):
