@@ -13,6 +13,9 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
         Cross entropy error (float)
     """
     # TODO implement this function (Task 3a)
+    batch_size = targets.shape[0]
+    cee = np.mean(-np.sum(targets*np.log(outputs),axis=1))
+    print(cee)
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
     raise NotImplementedError
@@ -41,9 +44,8 @@ class SoftmaxModel:
         
         # TODO implement this function (Task 3a)
         #@ calls the matmul function
-        print(X.shape)
-        y = (np.exp(X@self.w))/(np.sum(np.exp(X@self.w), axis=1))[:,None]
-        print(y.shape)
+        y = (np.exp(X@self.w))/(np.sum(np.exp(X@self.w), axis=1))[:,None] #tricks for fixing list type 
+    
         return y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
@@ -56,6 +58,8 @@ class SoftmaxModel:
             targets: labels/targets of each image of shape: [batch size, num_classes]
         """
         # TODO implement this function (Task 3a)
+        batch_size = targets.shape[0]
+        self.grad = (-(np.matmul((targets-outputs),X)))/batch_size
         # To implement L2 regularization task (4b) you can get the lambda value in self.l2_reg_lambda 
         # which is defined in the constructor.
         assert targets.shape == outputs.shape,\
