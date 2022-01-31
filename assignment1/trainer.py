@@ -1,3 +1,4 @@
+from random import seed
 import numpy as np
 import utils
 
@@ -23,6 +24,8 @@ class BaseTrainer:
         self.batch_size = batch_size
         self.model = model
         self.shuffle_dataset = shuffle_dataset
+        self.stop_count = 10
+        #self.number_of_cycles = 0
 
     def validation_step(self):
         """
@@ -71,7 +74,8 @@ class BaseTrainer:
             loss={},
             accuracy={}
         )
-
+        counter = 0
+        prev_best_loss = np.inf
         global_step = 0
         for epoch in range(num_epochs):
             train_loader = utils.batch_loader(
@@ -90,5 +94,29 @@ class BaseTrainer:
 
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
+                    if self.stop_count:
+                        # No improvement
+                        if prev_best_loss < val_loss:
+                            counter += 1
+                        else:
+                            counter = 0
+                            prev_best_loss = val_loss
+                            
+                        # We have reached max number of passes trough dataset without improvement
+                        if counter == self.stop_count:
+                            print(f"We went trough {epoch} of {num_epochs} before stopping")
+                            return train_history, val_history
+                    # if(global_step >= num_steps_per_val*self.stop_count and val_history["loss"][global_step] >= val_history["loss"][global_step-(num_steps_per_val*self.stop_count)]):
+                    #     print(f'Training stopped after {epoch} epochs. {epoch}/{num_epochs} total')
+                    #     return train_history, val_history
+                    # if self.number_of_cycles % 10 == 0 and self.number_of_cycles > 0:
+                    #     print(val_history["loss"][global_step])
+                    #     print(num_steps_per_val)
+                    #     print(val_history["loss"])
+                    # #if global_step % 10 == 0 and (val_history["loss"][global_step] <= val_history["loss"][global_step-1]):
+                    #     print(f'Training stopped after {epoch} epochs. {epoch}/{num_epochs} total')
+                    #     #return train_history, val_history
+                    
                 global_step += 1
+            
         return train_history, val_history

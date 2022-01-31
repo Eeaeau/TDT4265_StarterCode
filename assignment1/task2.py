@@ -74,7 +74,7 @@ class LogisticTrainer(BaseTrainer):
 
 if __name__ == "__main__":
     # hyperparameters DO NOT CHANGE IF NOT SPECIFIED IN ASSIGNMENT TEXT
-    num_epochs = 50
+    num_epochs = 500 #org 50
     learning_rate = 0.05
     batch_size = 128
     shuffle_dataset = False
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("Number of Training Steps")
     plt.ylabel("Cross Entropy Loss - Average")
-    plt.savefig("task2b_binary_train_loss.png")
+    #plt.savefig("task2b_binary_train_loss.png")
     plt.show()
 
     # Plot accuracy
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     plt.xlabel("Number of Training Steps")
     plt.ylabel("Accuracy")
     plt.legend()
-    plt.savefig("task2b_binary_train_accuracy.png")
+    #plt.savefig("task2b_binary_train_accuracy.png")
     plt.show()
 
     # Task 2e - Create a comparison between training with and without shuffling
