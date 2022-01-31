@@ -14,11 +14,11 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     """
     # TODO implement this function (Task 3a)
     batch_size = targets.shape[0]
-    cee = np.mean(-np.sum(targets*np.log(outputs),axis=1))
-    print(cee)
+    cee = np.mean(-np.sum(targets*np.log(outputs),axis=1)) #need to sum over correct axis, got 100 times more when haing default axis=0
+    
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    raise NotImplementedError
+    raise cee
 
 
 class SoftmaxModel:
