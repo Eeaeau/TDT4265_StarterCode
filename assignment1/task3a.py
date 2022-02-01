@@ -13,12 +13,15 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
         Cross entropy error (float)
     """
     # TODO implement this function (Task 3a)
-    batch_size = targets.shape[0]
-    cee = np.mean(-np.sum(targets*np.log(outputs),axis=1)) #need to sum over correct axis, got 100 times more when haing default axis=0
+    
+    #cee = np.mean(-np.sum(targets*np.log(outputs),axis=1)) #need to sum over correct axis, got 100 times more when having default axis=0
     
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    raise cee
+
+    cross_entropy = -np.sum(targets*np.log(outputs), axis=1)
+    return np.mean(cross_entropy)
+   # return cee
 
 
 class SoftmaxModel:
@@ -43,10 +46,13 @@ class SoftmaxModel:
         """
         
         # TODO implement this function (Task 3a)
-        #@ calls the matmul function
-        y = (np.exp(X@self.w))/(np.sum(np.exp(X@self.w), axis=1))[:,None] #tricks for fixing list type 
-    
+        #@ calls the matmul function, but like np matmul better
+
+        y = (np.exp(np.matmul(X,self.w)))/(np.sum(np.exp(np.matmul(X,self.w)), axis=1))[:,None] #tricks for fixing list type 
+         
+       
         return y
+        
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -59,12 +65,12 @@ class SoftmaxModel:
         """
         # TODO implement this function (Task 3a)
         batch_size = targets.shape[0]
-        self.grad = (-(np.matmul((targets-outputs),X)))/batch_size
+        self.grad = (-(np.matmul((targets-outputs).T,X).T))/batch_size
         # To implement L2 regularization task (4b) you can get the lambda value in self.l2_reg_lambda 
+        self.grad += self.l2_reg_lambda*self.w
         # which is defined in the constructor.
         assert targets.shape == outputs.shape,\
             f"Output shape: {outputs.shape}, targets: {targets.shape}"
-        self.grad = np.zeros_like(self.w)
         assert self.grad.shape == self.w.shape,\
              f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
 
@@ -82,18 +88,12 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
     """
     # TODO implement this function (Task 3a)
     #creating the new shape of Y, specifying it should be a int.
-    #inspiration from keras lib method. 
+    #inspiration from keras lib method source code. 
     n = Y.shape[0]
-    # input_shape = Y.shape
-    # if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
-    #     input_shape = tuple(input_shape[:-1])   
+    
     encoded = np.zeros((n,num_classes),dtype=int)
-    #encoded[] = 1
-    #print(f'n: {np.arange(n)}')
-    #print(f'Y: {Y.flatten()}')
+    
     encoded[np.arange(n), Y.ravel()] = 1
-    #output_shape = input_shape + (num_classes,)
-    #encoded = np.reshape(encoded, output_shape)
     
     return encoded
 

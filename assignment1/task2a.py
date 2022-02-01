@@ -77,7 +77,7 @@ class BinaryModel:
         self.grad = np.zeros_like(self.w)
         #t = np.matmul((targets-outputs).reshape(batch_size), X).reshape(X.shape[1],1)/batch_size
         
-        self.grad = -np.matmul((targets-outputs).reshape(batch_size), X).reshape(X.shape[1],1)/batch_size #why does it need to be divided on the batch size. 
+        self.grad = -np.matmul(X.T,(targets-outputs))/batch_size #why does it need to be divided on the batch size. 
         #self.grad = -np.matmul(X,(targets-outputs)) #need to reshape, grad shape is (785,1), target and output shape is (100,1), X shape is (100,785)
         assert self.grad.shape == self.w.shape,\
             f"Grad shape: {self.grad.shape}, w: {self.w.shape}"

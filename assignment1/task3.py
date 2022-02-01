@@ -17,7 +17,14 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray, model: SoftmaxModel) 
         Accuracy (float)
     """
     # TODO: Implement this function (task 3c)
-    accuracy = 0
+    batch_size = X.shape[0] #or targets.shape[0]
+    pred_index = np.argmax(model.forward(X),axis=1) #since we are using softmax, the argmax will be the index with the highest value.
+    #since targets are one the form [0,0,0,1,0,0,0,0,0,0] (here ex 3) (from one hot encoding) using argmax on it will give us the correct index. Then we can compare the index that are
+    #alike and count them. 
+    targ_index = np.argmax(targets, axis=1)
+
+    #np.count_nonzero will count how many times the prediction and target are the same, since then the argument will be True which equals 1. False equals 0
+    accuracy = np.count_nonzero(pred_index == targ_index)/batch_size
     return accuracy
 
 
@@ -36,8 +43,13 @@ class SoftmaxTrainer(BaseTrainer):
             loss value (float) on batch
         """
         # TODO: Implement this function (task 3b)
-        loss = 0
+        out_forward = self.model.forward(X_batch) #forward pass
+        self.model.backward(X_batch, out_forward, Y_batch) #backward pass
+        #now we need to update the weights from the backward pass, w =
+        self.model.w -= self.model.grad * self.learning_rate #not sure if we actually need the self. since learning rate is defined in main, but should have it.
+        loss = cross_entropy_loss(Y_batch,out_forward)
         return loss
+        
 
     def validation_step(self):
         """
