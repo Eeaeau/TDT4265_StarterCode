@@ -74,7 +74,7 @@ def load_binary_dataset(class1: int, class2: int, train_size: int = 18000, test_
     X_train, Y_train, X_val, Y_val = mnist.load()
 
 
-    if stochastic:
+    if sample_stochastic:
         train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
         val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
     else:
@@ -119,7 +119,7 @@ def load_full_mnist(train_size: int = 18000, test_size: int = 2000, sample_stoch
     """
     X_train, Y_train, X_val, Y_val = mnist.load()
 
-    if stochastic:
+    if sample_stochastic:
         train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
         val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
     else:
