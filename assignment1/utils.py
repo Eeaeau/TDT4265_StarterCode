@@ -64,10 +64,13 @@ def load_binary_dataset(class1: int, class2: int):
     val_size = 2000
     X_train, Y_train, X_val, Y_val = mnist.load()
 
-    # First 20000 images from train set
-    X_train, Y_train = X_train[:train_size], Y_train[:train_size]
+    # First 18000 images from train set
+    train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
+    X_train, Y_train = X_train[train_idx], Y_train[train_idx]
     # Last 2000 images from test set
-    X_val, Y_val = X_val[:val_size], Y_val[:val_size]
+    val_idx = np.random.choice(X_val.shape[0], val_size, replace=False)
+    X_val, Y_val = X_val[val_idx], Y_val[val_idx]
+
     X_train, Y_train = binary_prune_dataset(
         class1, class2, X_train, Y_train
     )
