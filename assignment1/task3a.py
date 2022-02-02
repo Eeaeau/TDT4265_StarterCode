@@ -18,24 +18,17 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     assert (
         targets.shape == outputs.shape
     ), f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    # raise NotImplementedError
 
     batch_size = targets.size
 
-    # C = -(
-    #     1
-    #     / batch_size
-    #     * (targets.T @ np.log(outputs) + (1 - targets).T @ np.log(1 - outputs))
-    # )[0, 0]
-
-    C = -1 / batch_size * np.matmul(targets, np.log(outputs))
+    C = -targets.shape[1] / batch_size * np.tensordot(targets, np.log(outputs))
 
     return C
 
 
 def softmax(X: np.ndarray):
 
-    return np.exp(X) / np.sum(np.exp(X))
+    return np.exp(X) / np.sum(np.exp(X), axis=1)[:, None]
 
 
 class SoftmaxModel:
@@ -59,16 +52,7 @@ class SoftmaxModel:
         """
         # TODO implement this function (Task 3a)
 
-        print(X.T.shape)
-        print(self.w.shape)
-
         Y = softmax(X @ self.w)
-
-        print("y:", Y.shape)
-
-        assert (
-            Y.shape[0] == X.shape[0] & Y.shape[1] == self.num_outputs
-        ), f"y shape: {Y.shape}, Batch: { X.shape[0]}, Outputs: {self.num_outputs}"
 
         return Y
 
@@ -119,9 +103,9 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
     # for i, val in enumerate(Y):
     #     encoding[i][val[0]] = 1
 
-    encoding[np.arange(Y.size), Y.ravel()] = 1  # inspiered by keras
+    encoding[np.arange(Y.size), Y.ravel()] = 1  # inspired by keras
 
-    print(encoding)
+    # print(encoding)
 
     return encoding
 
