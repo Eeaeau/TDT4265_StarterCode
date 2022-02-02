@@ -88,13 +88,15 @@ class BaseTrainer:
 
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
-
-                    if (
-                        val_history["accuracy"].get(
-                            global_step - 50 * num_steps_per_val, 0
+                    prev_loss_mean = 0
+                    iterations_considered = 100
+                    for i in range(iterations_considered):
+                        prev_loss_mean += val_history["accuracy"].get(
+                            global_step - i * num_steps_per_val, 0
                         )
-                        >= val_loss
-                    ):
+                    prev_loss_mean /= iterations_considered
+
+                    if prev_loss_mean >= val_loss:
                         print("Early stop triggered at global step: ", global_step)
                         return train_history, val_history
 
