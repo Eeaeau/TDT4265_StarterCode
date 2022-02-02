@@ -20,16 +20,23 @@ def pre_process_images(X: np.ndarray):
 
     X_norm = np.zeros((X.shape[0], X.shape[1] + 1))
 
-    avg = np.mean(X)
-    peak = np.max(np.abs(X))
+    # avg = np.mean(X)
+    # peak = np.max(np.abs(X))
 
     for idx, val in enumerate(X):
 
-        X_norm[idx, :-1] = (2 * val / peak) - 1
+        X_norm[idx, :-1] = (val / 127.5) - 1.0
 
     X_norm[:, -1] = 1.0
 
     # print(np.min(X_norm))
+
+    # X_norm = np.zeros((X.shape[0], X.shape[1] + 1))
+    # for idx, b in enumerate(X):
+    #     X_norm[idx, :-1] = (b / 127.5) - 1.0
+    # X_norm[:, -1] = 1.0
+
+    return X_norm
 
     return X_norm
 
