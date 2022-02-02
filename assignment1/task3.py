@@ -45,9 +45,10 @@ class SoftmaxTrainer(BaseTrainer):
         # TODO: Implement this function (task 3b)
 
         Y_pred = model.forward(X_batch)
-        loss = cross_entropy_loss(Y_batch, Y_pred)
 
         self.model.backward(X_batch, Y_pred, Y_batch)
+
+        loss = cross_entropy_loss(Y_batch, Y_pred)
         self.model.w -= self.model.grad * self.learning_rate
 
         return loss
