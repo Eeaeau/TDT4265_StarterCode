@@ -125,8 +125,8 @@ if __name__ == "__main__":
             # # Plot accuracy
             # # plt.ylim([0.89, 0.93])
             utils.plot_loss(
-                train_history_reg02["accuracy"],
-                "Validation Accuracy with lambda=" + str(l2_lambda),
+                val_history_reg02["accuracy"],
+                "Validation Accuracy with $\lambda$=" + str(l2_lambda),
             )
 
         plt.xlabel("Number of Training Steps")
