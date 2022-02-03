@@ -24,14 +24,14 @@ def plot_figures(figures, nrows=1, ncols=1, size=(4, 4)):
 
     fig = plt.figure(figsize=size)
 
-    for i in range(1, nrows * ncols):
+    for i in range(1, nrows * ncols + 1):
         fig.add_subplot(nrows, ncols, i)
-        plt.imshow(figures[i])
+        plt.imshow(figures[i - 1])
 
 
 if __name__ == "__main__":
 
-    subtask = "d"  # adjust to run different subtasks
+    subtask = "b"  # adjust to run different subtasks
 
     # Train a model with L2 regularization (task 4b)
 
@@ -88,16 +88,19 @@ if __name__ == "__main__":
         # for weigth in weights:
         #     img = plt.imshow(weigth)
 
-        # plot_figures(weights01, 1, 10, (15, 4))
+        # plot_figures(weights01, 1, 11, (15, 4))
+        # plt.show()
 
         weights02 = model02.w[:-1, :]
         print(weights02.shape)
         weights02 = weights02.T.reshape((10, 28, 28))
+        print(weights02.shape)
 
-        plot_figures(np.concatenate((weights02, weights01), axis=0), 2, 10, (15, 4))
+        # plot_figures(weights02, 1, 11, (15, 4))
+        plot_figures(np.concatenate((weights01, weights02), axis=0), 2, 10, (15, 4))
+        # # Plotting of softmax weights (Task 4b)
+        # plt.imsave("task4b_softmax_weight.eps", weights01, cmap="gray")
         plt.show()
-        # Plotting of softmax weights (Task 4b)
-        plt.imsave("task4b_softmax_weight.eps", weights01, cmap="gray")
 
     elif (subtask == "c") | (subtask == "d"):
         # ----- Plotting of accuracy for difference values of lambdas (task 4c) ----- #
