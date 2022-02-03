@@ -89,7 +89,7 @@ class BaseTrainer:
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
                     prev_loss_mean = 0
-                    iterations_considered = 100
+                    iterations_considered = 200
                     for i in range(iterations_considered):
                         prev_loss_mean += val_history["accuracy"].get(
                             global_step - i * num_steps_per_val, 0
