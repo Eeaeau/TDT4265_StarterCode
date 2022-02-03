@@ -30,6 +30,9 @@ def plot_figures(figures, nrows=1, ncols=1, size=(4, 4)):
 
 
 if __name__ == "__main__":
+
+    subtask = "c"  # adjust to run different subtasks
+
     # Train a model with L2 regularization (task 4b)
 
     # hyperparameters DO NOT CHANGE IF NOT SPECIFIED IN ASSIGNMENT TEXT
@@ -46,84 +49,91 @@ if __name__ == "__main__":
     Y_train = one_hot_encode(Y_train, 10)
     Y_val = one_hot_encode(Y_val, 10)
 
-    model01 = SoftmaxModel(l2_reg_lambda=0.0)
-    trainer01 = SoftmaxTrainer(
-        model01,
-        learning_rate,
-        batch_size,
-        shuffle_dataset,
-        X_train,
-        Y_train,
-        X_val,
-        Y_val,
-    )
-    train_history_reg01, val_history_reg01 = trainer01.train(num_epochs)
+    if subtask == "b":
+        model01 = SoftmaxModel(l2_reg_lambda=0.0)
+        trainer01 = SoftmaxTrainer(
+            model01,
+            learning_rate,
+            batch_size,
+            shuffle_dataset,
+            X_train,
+            Y_train,
+            X_val,
+            Y_val,
+        )
+        train_history_reg01, val_history_reg01 = trainer01.train(num_epochs)
 
-    model02 = SoftmaxModel(l2_reg_lambda=2.0)
-    trainer02 = SoftmaxTrainer(
-        model02,
-        learning_rate,
-        batch_size,
-        shuffle_dataset,
-        X_train,
-        Y_train,
-        X_val,
-        Y_val,
-    )
-    train_history_reg02, val_history_reg02 = trainer02.train(num_epochs)
+        model02 = SoftmaxModel(l2_reg_lambda=2.0)
+        trainer02 = SoftmaxTrainer(
+            model02,
+            learning_rate,
+            batch_size,
+            shuffle_dataset,
+            X_train,
+            Y_train,
+            X_val,
+            Y_val,
+        )
+        train_history_reg02, val_history_reg02 = trainer02.train(num_epochs)
 
-    # You can finish the rest of task 4 below this point.
+        # You can finish the rest of task 4 below this point.
 
-    weights01 = model01.w[:-1, :]
-    print(weights01.shape)
-    weights01 = weights01.T.reshape((10, 28, 28))
-    print(weights01.shape)
-    # print(weights)
-    # fig = plt.figure(figsize=(1, 10))
+        weights01 = model01.w[:-1, :]
+        print(weights01.shape)
+        weights01 = weights01.T.reshape((10, 28, 28))
+        print(weights01.shape)
+        # print(weights)
+        # fig = plt.figure(figsize=(1, 10))
 
-    # for weigth in weights:
-    #     img = plt.imshow(weigth)
+        # for weigth in weights:
+        #     img = plt.imshow(weigth)
 
-    plot_figures(weights01, 1, 10, (15, 4))
+        # plot_figures(weights01, 1, 10, (15, 4))
 
-    weights02 = model02.w[:-1, :]
-    print(weights02.shape)
-    weights02 = weights02.T.reshape((10, 28, 28))
+        weights02 = model02.w[:-1, :]
+        print(weights02.shape)
+        weights02 = weights02.T.reshape((10, 28, 28))
 
-    plot_figures(weights02, 1, 10, (15, 4))
-    plt.show()
-    # Plotting of softmax weights (Task 4b)
-    plt.imsave("task4b_softmax_weight.png", weights01, cmap="gray")
+        plot_figures(np.concatenate((weights02, weights01), axis=0), 2, 10, (15, 4))
+        plt.show()
+        # Plotting of softmax weights (Task 4b)
+        plt.imsave("task4b_softmax_weight.eps", weights01, cmap="gray")
 
-    # Plotting of accuracy for difference values of lambdas (task 4c)
-    l2_lambdas = [2, 0.2, 0.02, 0.002]
+    elif subtask == "c":
+        # ----- Plotting of accuracy for difference values of lambdas (task 4c) ----- #
+        l2_lambdas = [2, 0.2, 0.02, 0.002]
 
-    # for l2_lambda in l2_lambdas:
+        for l2_lambda in l2_lambdas:
 
-    # model2 = SoftmaxModel(l2_reg_lambda=l2_lambda)
+            model2 = SoftmaxModel(l2_reg_lambda=l2_lambda)
 
-    # trainer = SoftmaxTrainer(
-    #     model2,
-    #     learning_rate,
-    #     batch_size,
-    #     shuffle_dataset,
-    #     X_train,
-    #     Y_train,
-    #     X_val,
-    #     Y_val,
-    # )
-    # train_history_reg02, val_history_reg02 = trainer.train(num_epochs)
+            trainer = SoftmaxTrainer(
+                model2,
+                learning_rate,
+                batch_size,
+                shuffle_dataset,
+                X_train,
+                Y_train,
+                X_val,
+                Y_val,
+            )
+            train_history_reg02, val_history_reg02 = trainer.train(num_epochs)
 
-    # # Plot accuracy
-    # # plt.ylim([0.89, 0.93])
-    # utils.plot_loss(train_history_reg02["accuracy"], "Validation Accuracy")
+            # # Plot accuracy
+            # # plt.ylim([0.89, 0.93])
+            utils.plot_loss(
+                train_history_reg02["accuracy"],
+                "Validation Accuracy with lambda=" + str(l2_lambda),
+            )
 
-    plt.xlabel("Number of Training Steps")
-    plt.ylabel("Accuracy")
-    plt.legend()
+        plt.xlabel("Number of Training Steps")
+        plt.ylabel("Accuracy")
+        plt.legend()
 
-    plt.savefig("task4c_l2_reg_accuracy.png")
+        plt.savefig("task4c_l2_reg_accuracy.eps")
+        plt.show()
 
-    # Task 4d - Plotting of the l2 norm for each weight
+    elif subtask == "d":
+        # Task 4d - Plotting of the l2 norm for each weight
 
-    plt.savefig("task4d_l2_reg_norms.png")
+        plt.savefig("task4d_l2_reg_norms.eps")
