@@ -77,7 +77,10 @@ class SoftmaxModel:
 
         batch_size = X.shape[0]
 
-        self.grad = -1 / batch_size * np.matmul(X.T, (targets - outputs))
+        self.grad = (
+            -1 / batch_size * np.matmul(X.T, (targets - outputs))
+            + self.l2_reg_lambda * self.w
+        )
 
         assert (
             self.grad.shape == self.w.shape
