@@ -31,7 +31,7 @@ def plot_figures(figures, nrows=1, ncols=1, size=(4, 4)):
 
 if __name__ == "__main__":
 
-    subtask = "c"  # adjust to run different subtasks
+    subtask = "d"  # adjust to run different subtasks
 
     # Train a model with L2 regularization (task 4b)
 
@@ -99,9 +99,10 @@ if __name__ == "__main__":
         # Plotting of softmax weights (Task 4b)
         plt.imsave("task4b_softmax_weight.eps", weights01, cmap="gray")
 
-    elif subtask == "c":
+    elif (subtask == "c") | (subtask == "d"):
         # ----- Plotting of accuracy for difference values of lambdas (task 4c) ----- #
         l2_lambdas = [2, 0.2, 0.02, 0.002]
+        L2_norms = []
 
         for l2_lambda in l2_lambdas:
 
@@ -118,6 +119,8 @@ if __name__ == "__main__":
                 Y_val,
             )
             train_history_reg02, val_history_reg02 = trainer.train(num_epochs)
+            L2_norm = np.linalg.norm(model2.w)
+            L2_norms.append(L2_norm)
 
             # # Plot accuracy
             # # plt.ylim([0.89, 0.93])
@@ -133,7 +136,13 @@ if __name__ == "__main__":
         plt.savefig("task4c_l2_reg_accuracy.eps")
         plt.show()
 
-    elif subtask == "d":
-        # Task 4d - Plotting of the l2 norm for each weight
+        if subtask == "d":
+            # Task 4d - Plotting of the l2 norm for each weight
 
-        plt.savefig("task4d_l2_reg_norms.eps")
+            plt.plot(l2_lambdas, L2_norms)
+
+            plt.xlabel("$\lambda$")
+            plt.ylabel("$L_2$ norm")
+
+            plt.savefig("task4d_l2_reg_norms.eps")
+            plt.show()
