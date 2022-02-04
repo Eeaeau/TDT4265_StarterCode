@@ -1,3 +1,4 @@
+from random import seed
 import numpy as np
 import utils
 
@@ -25,6 +26,8 @@ class BaseTrainer:
         self.batch_size = batch_size
         self.model = model
         self.shuffle_dataset = shuffle_dataset
+        self.stop_count = 10
+        # self.number_of_cycles = 0
 
     def validation_step(self):
         """
@@ -65,7 +68,8 @@ class BaseTrainer:
         # A tracking value of loss over all training steps
         train_history = dict(loss={}, accuracy={})
         val_history = dict(loss={}, accuracy={})
-
+        best_loss = np.inf  # starting with maximum as best loss
+        repetitive_worse = 0  # number of times the loss has been worse than best
         global_step = 0
         for epoch in range(num_epochs):
             train_loader = utils.batch_loader(
@@ -88,20 +92,18 @@ class BaseTrainer:
 
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
-                    prev_loss_mean = 0
-                    iterations_considered = 10
-                    for i in range(iterations_considered):
-                        prev_loss_mean += val_history["loss"].get(
-                            global_step - i * num_steps_per_val, 0
-                        )  # could have been more efficent if stored in a variable, but wanted everything in place
-                    prev_loss_mean /= iterations_considered
+                    if val_history["loss"][global_step] < best_loss:
+                        best_loss = val_history["loss"][global_step]
+                        repetitive_worse = 0
+                    else:
+                        repetitive_worse += 1
 
-                    if prev_loss_mean >= val_loss:
-                        print("Early stop triggered at global step: ", global_step)
-                        return (
-                            train_history,
-                            val_history,
-                        )  # assume that that the prev loss is not significantly better
+                    if repetitive_worse == self.stop_count:
+                        print(
+                            f"We went trough {epoch} of {num_epochs} epochs before stopping"
+                        )
+                        return train_history, val_history
 
                 global_step += 1
+
         return train_history, val_history
