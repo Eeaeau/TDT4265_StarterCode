@@ -1,5 +1,3 @@
-from operator import mod
-from statistics import mode
 import numpy as np
 import utils
 import matplotlib.pyplot as plt
@@ -22,10 +20,16 @@ def calculate_accuracy(
         Accuracy (float)
     """
     # TODO: Implement this function (task 3c)
-    Y_pred = model.forward(X)
+    batch_size = X.shape[0]  # or targets.shape[0]
+    pred_index = np.argmax(
+        model.forward(X), axis=1
+    )  # since we are using softmax, the argmax will be the index with the highest value.
+    # since targets are one the form [0,0,0,1,0,0,0,0,0,0] (here ex 3) (from one hot encoding) using argmax on it will give us the correct index. Then we can compare the index that are
+    # alike and count them.
+    targ_index = np.argmax(targets, axis=1)
 
-    accuracy = np.count_nonzero(targets == np.rint(Y_pred)) / targets.size
-
+    # np.count_nonzero will count how many times the prediction and target are the same, since then the argument will be True which equals 1. False equals 0
+    accuracy = np.count_nonzero(pred_index == targ_index) / batch_size
     return accuracy
 
 
@@ -43,14 +47,13 @@ class SoftmaxTrainer(BaseTrainer):
             loss value (float) on batch
         """
         # TODO: Implement this function (task 3b)
-
-        Y_pred = self.model.forward(X_batch)
-
-        self.model.backward(X_batch, Y_pred, Y_batch)
-
+        Y_pred = self.model.forward(X_batch)  # forward pass
+        self.model.backward(X_batch, Y_pred, Y_batch)  # backward pass
+        # now we need to update the weights from the backward pass, w =
+        self.model.w -= (
+            self.model.grad * self.learning_rate
+        )  # not sure if we actually need the self. since learning rate is defined in main, but should have it.
         loss = cross_entropy_loss(Y_batch, Y_pred)
-        self.model.w -= self.model.grad * self.learning_rate
-
         return loss
 
     def validation_step(self):
@@ -67,10 +70,10 @@ class SoftmaxTrainer(BaseTrainer):
         """
         # NO NEED TO CHANGE THIS FUNCTION
         logits = self.model.forward(self.X_val)
-        loss = cross_entropy_loss(self.Y_val, logits)
+        loss = cross_entropy_loss(Y_val, logits)
 
-        accuracy_train = calculate_accuracy(self.X_train, self.Y_train, self.model)
-        accuracy_val = calculate_accuracy(self.X_val, self.Y_val, self.model)
+        accuracy_train = calculate_accuracy(X_train, Y_train, self.model)
+        accuracy_val = calculate_accuracy(X_val, Y_val, self.model)
         return loss, accuracy_train, accuracy_val
 
 
@@ -123,7 +126,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("Number of Training Steps")
     plt.ylabel("Cross Entropy Loss - Average")
-    plt.savefig("task3b_softmax_train_loss.png")
+    plt.savefig("task3b_softmax_train_loss.eps")
     plt.show()
 
     # Plot accuracy
@@ -133,5 +136,5 @@ if __name__ == "__main__":
     plt.xlabel("Number of Training Steps")
     plt.ylabel("Accuracy")
     plt.legend()
-    plt.savefig("task3b_softmax_train_accuracy.png")
+    plt.savefig("task3b_softmax_train_accuracy.eps")
     plt.show()

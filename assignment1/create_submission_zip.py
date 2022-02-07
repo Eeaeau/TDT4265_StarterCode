@@ -24,18 +24,18 @@ files_to_include = {
     "task2a": [".py"],
     "task3": [".py"],
     "task3a": [".py"],
+    "task4": [".py"],
     "trainer": [".py"],
     "utils": [".py"],
 }
 zipfile_path = "assignment_code.zip"
-print("-"*80)
+print("-" * 80)
 
 
 def select_file(filename, extension):
     if len(extensions) == 1:
         return filename + extensions[0]
-    options = {str(i): filename + extensions[i]
-               for i in range(len(extensions))}
+    options = {str(i): filename + extensions[i] for i in range(len(extensions))}
     filename = query("Which file would you like to add?", options)
     return filename
 
@@ -44,12 +44,11 @@ files_added = []
 with zipfile.ZipFile(zipfile_path, "w") as fp:
     for filename, extensions in files_to_include.items():
         filepath = select_file(filename, extensions)
-        assert os.path.isfile(filepath),\
-            f"Did not find path: {filepath}"
+        assert os.path.isfile(filepath), f"Did not find path: {filepath}"
         fp.write(filepath)
         files_added.append(filepath)
 
-print("-"*80)
+print("-" * 80)
 print("Files added to zip:")
 print("\t" + "\n\t".join(files_added))
 print("Zipfile saved to: {}".format(zipfile_path))
