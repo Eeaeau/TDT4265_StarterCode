@@ -1,6 +1,7 @@
 import numpy as np
 import utils
 import typing
+import scipy.stats as stats
 
 np.random.seed(1)
 
@@ -14,6 +15,10 @@ def pre_process_images(X: np.ndarray):
     """
     assert X.shape[1] == 784, f"X.shape[1]: {X.shape[1]}, should be 784"
     # TODO implement this function (Task 2a)
+    X = stats.zscore(X, axis=-1, ddof=1)
+    bias = np.ones((X.shape[0], 1))
+    X = np.hstack((X, bias))
+    assert X.shape[1] == 785, f"X.shape[1]: {X.shape[1]}, should be 785"
     return X
 
 
@@ -34,6 +39,21 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     C = -targets.shape[1] / batch_size * np.tensordot(targets, np.log(outputs))
 
 
+def sigmoid(x: np.ndarray):
+    """
+    Args:
+        x: ndarray
+    Returns:
+        corresponding sigmoid value
+    """
+    return 1 / (1 + np.exp(-x))
+
+
+def softmax(X: np.ndarray):
+
+    return np.exp(X) / np.sum(np.exp(X), axis=1)[:, None]
+
+
 class SoftmaxModel:
     def __init__(
         self,
@@ -45,7 +65,7 @@ class SoftmaxModel:
         # Always reset random seed before weight init to get comparable results.
         np.random.seed(1)
         # Define number of input nodes
-        self.I = None
+        self.I = 785  # None
         self.use_improved_sigmoid = use_improved_sigmoid
 
         # Define number of output nodes
@@ -74,7 +94,18 @@ class SoftmaxModel:
         # TODO implement this function (Task 2b)
         # HINT: For performing the backward pass, you can save intermediate activations in variables in the forward pass.
         # such as self.hidden_layer_output = ...
-        return None
+
+        # for l in range(len(self.neurons_per_layer)):
+        #     a =
+
+        # hard coded for 1 hidden layer
+        Z = X @ self.ws[0]
+
+        a = sigmoid(Z)
+
+        Y = softmax(a @ self.ws[1])
+
+        return Y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -93,7 +124,10 @@ class SoftmaxModel:
         # For example, self.grads[0] will be the gradient for the first hidden layer
         self.grads = []
 
+        delta 
+
         for grad, w in zip(self.grads, self.ws):
+
             assert (
                 grad.shape == w.shape
             ), f"Expected the same shape. Grad shape: {grad.shape}, w: {w.shape}."
@@ -114,6 +148,8 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
     encoding = np.zeros((Y.size, num_classes))
 
     encoding[np.arange(Y.size), Y.ravel()] = 1  # inspired by keras
+
+    return encoding
 
 
 def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):
