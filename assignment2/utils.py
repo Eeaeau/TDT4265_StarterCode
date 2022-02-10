@@ -5,9 +5,8 @@ import matplotlib.pyplot as plt
 
 
 def batch_loader(
-        X: np.ndarray, Y: np.ndarray,
-        batch_size: int, shuffle=False,
-        drop_last=True) -> Generator:
+    X: np.ndarray, Y: np.ndarray, batch_size: int, shuffle=False, drop_last=True
+) -> Generator:
     """
     Creates a batch generator over the whole dataset (X, Y) which returns a generator iterating over all the batches.
     This function is called once each epoch.
@@ -26,10 +25,12 @@ def batch_loader(
     indices = list(range(len(X)))
 
     # TODO (copy from last assignment) implement dataset shuffling here.
-
+    if shuffle:
+        rng = np.random.default_rng()
+        rng.shuffle(indices)
     for i in range(num_batches):
         # select a set of indices for each batch of samples
-        batch_indices = indices[i*batch_size:(i+1)*batch_size]
+        batch_indices = indices[i * batch_size : (i + 1) * batch_size]
         x = X[batch_indices]
         y = Y[batch_indices]
         # return both images (x) and labels (y)
@@ -61,7 +62,9 @@ def load_full_mnist():
     return X_train, Y_train, X_val, Y_val
 
 
-def plot_loss(loss_dict: dict, label: str = None, npoints_to_average=1, plot_variance=True):
+def plot_loss(
+    loss_dict: dict, label: str = None, npoints_to_average=1, plot_variance=True
+):
     """
     Args:
         loss_dict: a dictionary where keys are the global step and values are the given loss / accuracy
@@ -80,14 +83,16 @@ def plot_loss(loss_dict: dict, label: str = None, npoints_to_average=1, plot_var
     loss_std = []
     steps = []
     for i in range(num_points):
-        points = loss[i*npoints_to_average:(i+1)*npoints_to_average]
-        step = global_steps[i*npoints_to_average + npoints_to_average//2]
+        points = loss[i * npoints_to_average : (i + 1) * npoints_to_average]
+        step = global_steps[i * npoints_to_average + npoints_to_average // 2]
         mean_loss.append(np.mean(points))
         loss_std.append(np.std(points))
         steps.append(step)
-    plt.plot(steps, mean_loss,
-             label=f"{label} (mean over {npoints_to_average} steps)")
+    plt.plot(steps, mean_loss, label=f"{label} (mean over {npoints_to_average} steps)")
     plt.fill_between(
-        steps, np.array(mean_loss) -
-        np.array(loss_std), np.array(mean_loss) + loss_std,
-        alpha=.2, label=f"{label} variance over {npoints_to_average} steps")
+        steps,
+        np.array(mean_loss) - np.array(loss_std),
+        np.array(mean_loss) + loss_std,
+        alpha=0.2,
+        label=f"{label} variance over {npoints_to_average} steps",
+    )
