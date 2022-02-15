@@ -137,12 +137,17 @@ class SoftmaxModel:
         # For example, self.grads[0] will be the gradient for the first hidden layer
         self.grads = []
         batch_size = X.shape[0]
-
+        delta = -(targets - outputs)
         #defining the gradient for the first layer
-        init_gradient =(self.hidden_layer_output[0].T @(-(targets - outputs)))/ batch_size
+        init_gradient =(self.hidden_layer_output[0].T @ delta)/ batch_size
         self.grads.append(init_gradient)
-        for i in range(1,len(self.neurons_per_layer)):
+        for i in range(2,len(self.neurons_per_layer)):
+            z = self.Zs[-i]
+            s = sigmoid(z)
+            delta = (delta @ self.ws[-i].T @ delta) * s
+            self.grads.insert(0,(self.hidden_layer_output[-i-1].T @ delta)/batch_size)
             
+
         for grad, w in zip(self.grads, self.ws):
 
             assert (
