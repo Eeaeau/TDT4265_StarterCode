@@ -37,7 +37,7 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     batch_size = targets.size
 
     C = -targets.shape[1] / batch_size * np.tensordot(targets, np.log(outputs))
-
+    return C
 
 def sigmoid(x: np.ndarray):
     """
@@ -72,6 +72,8 @@ class SoftmaxModel:
         # neurons_per_layer = [64, 10] indicates that we will have two layers:
         # A hidden layer with 64 neurons and a output layer with 10 neurons.
         self.neurons_per_layer = neurons_per_layer
+        self.hidden_layer_output = []
+        self.Zs = []
 
         # Initialize the weights
         self.ws = []
@@ -99,11 +101,22 @@ class SoftmaxModel:
         #     a =
 
         # hard coded for 1 hidden layer
-        Z = X @ self.ws[0]
+        self.hidden_layer_output = []
+        self.Zs = []
+        #dont want to matmul the X with the weights for every layer, so need to store the last layer in a another variable and initiate that variable with X
+        Fs = X
+        for i in range(len(self.neurons_per_layer) - 1): #-1 since we want the last layer to go through softmax
+            Z = Fs @ self.ws[i]
+            Fs = sigmoid(Z)
 
-        a = sigmoid(Z)
+            #saving the values 
+            self.Zs.append(Z)
+            self.hidden_layer_output.append(Fs)
+        
+        #last layer need to be go through softmax
+        Z = Fs @ self.ws[-1] #then we have the last output nodes in Fs and can matmul them with the weights
 
-        Y = softmax(a @ self.ws[1])
+        Y = softmax(Z)
 
         return Y
 
@@ -123,8 +136,17 @@ class SoftmaxModel:
         # A list of gradients.
         # For example, self.grads[0] will be the gradient for the first hidden layer
         self.grads = []
-
-        delta 
+        batch_size = X.shape[0]
+        delta = -(targets - outputs)
+        #defining the gradient for the first layer
+        init_gradient =(self.hidden_layer_output[0].T @ delta)/ batch_size
+        self.grads.append(init_gradient)
+        for i in range(2,len(self.neurons_per_layer)):
+            z = self.Zs[-i]
+            s = sigmoid(z)
+            delta = (delta @ self.ws[-i].T @ delta) * s
+            self.grads.insert(0,(self.hidden_layer_output[-i-1].T @ delta)/batch_size)
+            
 
         for grad, w in zip(self.grads, self.ws):
 
