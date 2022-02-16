@@ -1,6 +1,15 @@
 import numpy as np
 import utils
 
+#sol
+#sol
+def should_early_stop(validation_loss: dict, num_steps=10): #sol
+    losses = list(validation_loss.values()) #sol
+    relevant = losses[-(num_steps+1):]#sol
+    if len(relevant) < num_steps:#sol
+        return#sol
+    return min(relevant) == relevant[0] #sol
+
 
 class BaseTrainer:
 
@@ -90,5 +99,8 @@ class BaseTrainer:
 
                     # TODO (Task 2d): Implement early stopping here.
                     # You can access the validation loss in val_history["loss"]
+                    if should_early_stop(val_history["loss"], num_steps=10): #sol
+                        print("early stop at:", epoch) #sol
+                        return train_history, val_history #sol
                 global_step += 1
         return train_history, val_history

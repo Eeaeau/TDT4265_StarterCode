@@ -3,7 +3,6 @@ import mnist
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(0)
 
 def batch_loader(
         X: np.ndarray, Y: np.ndarray,
@@ -27,6 +26,8 @@ def batch_loader(
     indices = list(range(len(X)))
 
     # TODO (task 2e) implement dataset shuffling here.
+    if shuffle: #sol
+        np.random.shuffle(indices) #sol
 
     for i in range(num_batches):
         # select a set of indices for each batch of samples
@@ -37,7 +38,7 @@ def batch_loader(
         yield (x, y)
 
 
-### NO NEED TO EDIT ANY CODE BELOW THIS ###
+### NO NEED TO EDIT ANY CODE BELOW THIS ### 
 
 def binary_prune_dataset(class1: int, class2: int,
                          X: np.ndarray, Y: np.ndarray):
@@ -56,37 +57,102 @@ def binary_prune_dataset(class1: int, class2: int,
     Y_binary[mask2] = 0
     return X[mask_total], Y_binary[mask_total]
 
+# def load_binary_dataset(class1: int, class2: int, train_size: int = 18000, test_size: int = 2000, sample_stochastic: bool = True):
+#     """
+#     Loads, prunes and splits the dataset into train, and validation.
+#     Args:
+#         train_size: Number of training samples
+#         test_size: Number of validation samples
+#         sample_stochastic: If True, the subset is sampled stochastically.
+#
+#     Returns:
+#         X_train: images of shape [train_size, 784] in the range (0, 255)
+#         Y_train: labels of shape [train_size]
+#         X_val: images of shape [test_size, 784] in the range (0, 255)
+#         Y_val: labels of shape [test_size]
+#     """
+#     X_train, Y_train, X_val, Y_val = mnist.load()
+#
+#
+#     if sample_stochastic:
+#         train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
+#         val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
+#     else:
+#         # Default to first 'train_size' of train set images for training
+#         # and last 'test_size' from test set images for validation
+#         train_idx = np.arange(train_size)
+#         val_idx = np.arange(X_val.shape[0] - test_size, X_val.shape[0])
+#
+#     # Sub set sampling
+#     X_train, Y_train = X_train[train_idx], Y_train[train_idx]
+#     X_val, Y_val = X_val[val_idx], Y_val[val_idx]
+#
+#     X_train, Y_train = binary_prune_dataset(
+#         class1, class2, X_train, Y_train
+#     )
+#     X_val, Y_val = binary_prune_dataset(
+#         class1, class2, X_val, Y_val
+#     )
+#     # Reshape to (N, 1)
+#     Y_train = Y_train.reshape(-1, 1)
+#     Y_val = Y_val.reshape(-1, 1)
+#
+#     print(f"Train shape: X: {X_train.shape}, Y: {Y_train.shape}")
+#     print(f"Validation shape: X: {X_val.shape}, Y: {Y_val.shape}")
+#
+#     return X_train, Y_train, X_val, Y_val
+#
+#
+# def load_full_mnist(train_size: int = 18000, test_size: int = 2000, sample_stochastic: bool = True):
+#     """
+#     Loads and splits the dataset into train, validation and test.
+#     Args:
+#         train_size: Number of training samples
+#         test_size: Number of validation samples
+#         sample_stochastic: If True, the subset is sampled stochastically.
+#
+#     Returns:
+#         X_train: images of shape [train_size, 784] in the range (0, 255)
+#         Y_train: labels of shape [train_size]
+#         X_val: images of shape [test_size, 784] in the range (0, 255)
+#         Y_val: labels of shape [test_size]
+#     """
+#     X_train, Y_train, X_val, Y_val = mnist.load()
+#
+#     if sample_stochastic:
+#         train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
+#         val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
+#     else:
+#         # Default to first 'train_size' of train set images for training
+#         # and last 'test_size' from test set images for validation
+#         train_idx = np.arange(train_size)
+#         val_idx = np.arange(X_val.shape[0] - test_size, X_val.shape[0])
+#
+#     # Sub set sampling
+#     X_train, Y_train = X_train[train_idx], Y_train[train_idx]
+#     X_val, Y_val = X_val[val_idx], Y_val[val_idx]
+#
+#     # Reshape to (N, 1)
+#     Y_train = Y_train.reshape(-1, 1)
+#     Y_val = Y_val.reshape(-1, 1)
+#
+#     print(f"Train shape: X: {X_train.shape}, Y: {Y_train.shape}")
+#     print(f"Validation shape: X: {X_val.shape}, Y: {Y_val.shape}")
+#
+#     return X_train, Y_train, X_val, Y_val
 
-def load_binary_dataset(class1: int, class2: int, train_size: int = 18000, test_size: int = 2000, sample_stochastic: bool = True):
+def load_binary_dataset(class1: int, class2: int):
     """
     Loads, prunes and splits the dataset into train, and validation.
-    Args:
-        train_size: Number of training samples
-        test_size: Number of validation samples
-        sample_stochastic: If True, the subset is sampled stochastically.
-
-    Returns:
-        X_train: images of shape [train_size, 784] in the range (0, 255)
-        Y_train: labels of shape [train_size]
-        X_val: images of shape [test_size, 784] in the range (0, 255)
-        Y_val: labels of shape [test_size]
     """
+    train_size = 18000
+    val_size = 2000
     X_train, Y_train, X_val, Y_val = mnist.load()
 
-
-    if sample_stochastic:
-        train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
-        val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
-    else:
-        # Default to first 'train_size' of train set images for training
-        # and last 'test_size' from test set images for validation
-        train_idx = np.arange(train_size)
-        val_idx = np.arange(X_val.shape[0] - test_size, X_val.shape[0])
-
-    # Sub set sampling
-    X_train, Y_train = X_train[train_idx], Y_train[train_idx]
-    X_val, Y_val = X_val[val_idx], Y_val[val_idx]
-
+    # First 20000 images from train set
+    X_train, Y_train = X_train[:train_size], Y_train[:train_size]
+    # Last 2000 images from test set
+    X_val, Y_val = X_val[:val_size], Y_val[:val_size]
     X_train, Y_train = binary_prune_dataset(
         class1, class2, X_train, Y_train
     )
@@ -103,35 +169,18 @@ def load_binary_dataset(class1: int, class2: int, train_size: int = 18000, test_
     return X_train, Y_train, X_val, Y_val
 
 
-def load_full_mnist(train_size: int = 18000, test_size: int = 2000, sample_stochastic: bool = True):
+def load_full_mnist():
     """
     Loads and splits the dataset into train, validation and test.
-    Args:
-        train_size: Number of training samples
-        test_size: Number of validation samples
-        sample_stochastic: If True, the subset is sampled stochastically.
-
-    Returns:
-        X_train: images of shape [train_size, 784] in the range (0, 255)
-        Y_train: labels of shape [train_size]
-        X_val: images of shape [test_size, 784] in the range (0, 255)
-        Y_val: labels of shape [test_size]
     """
+    train_size = 18000
+    test_size = 2000
     X_train, Y_train, X_val, Y_val = mnist.load()
 
-    if sample_stochastic:
-        train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
-        val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
-    else:
-        # Default to first 'train_size' of train set images for training
-        # and last 'test_size' from test set images for validation
-        train_idx = np.arange(train_size)
-        val_idx = np.arange(X_val.shape[0] - test_size, X_val.shape[0])
-
-    # Sub set sampling
-    X_train, Y_train = X_train[train_idx], Y_train[train_idx]
-    X_val, Y_val = X_val[val_idx], Y_val[val_idx]
-
+    # First 20000 images from train set
+    X_train, Y_train = X_train[:train_size], Y_train[:train_size]
+    # Last 2000 images from test set
+    X_val, Y_val = X_val[-test_size:], Y_val[-test_size:]
     # Reshape to (N, 1)
     Y_train = Y_train.reshape(-1, 1)
     Y_val = Y_val.reshape(-1, 1)
@@ -166,9 +215,7 @@ def plot_loss(loss_dict: dict, label: str = None, npoints_to_average=1, plot_var
         mean_loss.append(np.mean(points))
         loss_std.append(np.std(points))
         steps.append(step)
-    plt.plot(steps, mean_loss,
-             label=f"{label} mean over {npoints_to_average} steps")
+    plt.plot(steps, mean_loss, label=f"{label} mean over {npoints_to_average} steps")
     plt.fill_between(
-        steps, np.array(mean_loss) -
-        np.array(loss_std), np.array(mean_loss) + loss_std,
+        steps, np.array(mean_loss) - np.array(loss_std), np.array(mean_loss) + loss_std,
         alpha=.2, label=f"{label} variance over {npoints_to_average} steps")
