@@ -19,15 +19,18 @@ def calculate_accuracy(
         Accuracy (float)
     """
     # TODO: Implement this function (copy from last assignment)
-    pred_index = np.argmax(
-        model.forward(X), axis=1
-    )  # since we are using softmax, the argmax will be the index with the highest value.
+    # pred_index = np.argmax(
+    #     model.forward(X), axis=1
+    # )  # since we are using softmax, the argmax will be the index with the highest value.
     # since targets are one the form [0,0,0,1,0,0,0,0,0,0] (here ex 3) (from one hot encoding) using argmax on it will give us the correct index. Then we can compare the index that are
     # alike and count them.
-    targ_index = np.argmax(targets, axis=1)
-
-    # np.count_nonzero will count how many times the prediction and target are the same, since then the argument will be True which equals 1. False equals 0
-    accuracy = np.count_nonzero(pred_index == targ_index) / batch_size
+    accuracy = 0
+    logits = model.forward(X)
+    preds = logits.argmax(axis=1)
+    y = targets.argmax(axis=1)
+    assert y.shape == preds.shape
+    correct_preds = preds == y
+    accuracy = correct_preds.mean()
     return accuracy
 
 
@@ -154,3 +157,4 @@ if __name__ == "__main__":
     plt.ylabel("Accuracy")
     plt.legend()
     plt.savefig("task2c_train_loss.png")
+    plt.savefig("task2c_train_loss_eps.eps")
