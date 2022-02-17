@@ -44,7 +44,7 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     return C
 
 
-def sigmoid(X, use_improved_sigmoid):
+def sigmoid(X, use_improved_sigmoid=False):
     """
     Args:
         x: ndarray
@@ -52,19 +52,20 @@ def sigmoid(X, use_improved_sigmoid):
         corresponding sigmoid value
     """
     if use_improved_sigmoid:
-        return 1.7159*np.tanh(2/3 * X)
+        return 1.7159 * np.tanh(2 / 3 * X)
     else:
         return 1 / (1 + np.exp(-X))
 
 
-def sigmoid_prime(X, use_improved_sigmoid):
+def sigmoid_prime(X, use_improved_sigmoid=False):
     if use_improved_sigmoid:
-        return 1.14393/(np.cosh(2*X/3)**2)
+        # return 1.14393 / (np.cosh(2 * X / 3) ** 2)
+        return 2.28787 / (np.cosh(4 * X / 3 + 1))
     else:
         return sigmoid(X, False) * (1 - sigmoid(X, False))
 
 
-def softmax(X):
+def softmax(X: np.array):
 
     return np.exp(X) / np.sum(np.exp(X), axis=1)[:, None]
 
@@ -82,8 +83,6 @@ class SoftmaxModel:
         # Define number of input nodes
         self.I = 785
         self.use_improved_sigmoid = use_improved_sigmoid
-
-
 
         # Define number of output nodes
         # neurons_per_layer = [64, 10] indicates that we will have two layers:
@@ -123,7 +122,7 @@ class SoftmaxModel:
             len(self.neurons_per_layer) - 1
         ):  # -1 since we want the last layer to go through softmax
             Z = Fs @ self.ws[i]
-            Fs = sigmoid(Z,use_improved_sigmoid)
+            Fs = sigmoid(Z, self.use_improved_sigmoid)
 
             # saving the values
             self.Zs.append(Z)
@@ -160,7 +159,7 @@ class SoftmaxModel:
         for l in range(1, len(self.neurons_per_layer)):
             # print(l)
             z = self.Zs[-l]
-            s = sigmoid_prime(z, use_improved_sigmoid)
+            s = sigmoid_prime(z, self.use_improved_sigmoid)
             delta = (delta @ self.ws[-l].T) * s
             self.grads.insert(
                 0, (self.hidden_layer_output[-l - 1].T @ delta) / batch_size
