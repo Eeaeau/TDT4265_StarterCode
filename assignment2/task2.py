@@ -61,8 +61,19 @@ class SoftmaxTrainer(BaseTrainer):
 
         logits = self.model.forward(X_batch)
         self.model.backward(X_batch, logits, Y_batch)
-        for idx, w in enumerate(self.model.ws):
-            w -= self.learning_rate * self.model.grads[idx]
+
+        if self.use_momentum:
+            for idx, w in enumerate(self.model.ws):
+                w -= self.learning_rate * self.previous_grads[idx]
+
+                self.previous_grads[idx] = (
+                    self.model.grads[idx]
+                    + self.momentum_gamma * self.previous_grads[idx]
+                )
+            else:
+                for idx, w in enumerate(self.model.ws):
+                    w -= self.learning_rate * self.model.grads[idx]
+
         self.model.zero_grad()
         loss = cross_entropy_loss(Y_batch, logits)  # sol? nope its snowing now
 
@@ -156,5 +167,6 @@ if __name__ == "__main__":
     plt.xlabel("Number of Training Steps")
     plt.ylabel("Accuracy")
     plt.legend()
-    plt.savefig("task2c_train_loss.png")
-    #plt.savefig("task2c_train_loss_eps.eps")
+    # plt.savefig("task2c_train_loss.png")
+    plt.savefig("task2c_train_loss.eps")
+    plt.show()
