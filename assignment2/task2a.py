@@ -52,13 +52,16 @@ def sigmoid(X, use_improved_sigmoid):
         corresponding sigmoid value
     """
     if use_improved_sigmoid:
-        return
+        return 1.7159*np.tanh(2/3 * X)
     else:
         return 1 / (1 + np.exp(-X))
 
 
 def sigmoid_prime(X, use_improved_sigmoid):
-    return sigmoid(X, use_improved_sigmoid) * (1 - sigmoid(X, use_improved_sigmoid))
+    if use_improved_sigmoid:
+        return 1.14393/(np.cosh(2*X/3)**2)
+    else:
+        return sigmoid(X, False) * (1 - sigmoid(X, False))
 
 
 def softmax(X):
