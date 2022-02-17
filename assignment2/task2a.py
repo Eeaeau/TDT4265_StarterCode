@@ -77,8 +77,9 @@ class SoftmaxModel:
         self.I = 785
         self.use_improved_sigmoid = use_improved_sigmoid
 
-        self.sigmoid = lambda X: 1 / (1 + np.exp(-X))
-        self.sigmoid_der = lambda X: self.sigmoid(X) * (1 - self.sigmoid(X))
+        # self.sigmoid = lambda X: 1 / (1 + np.exp(-X))
+        # self.sigmoid_der = lambda X: self.sigmoid(X) * (1 - self.sigmoid(X))
+
         # Define number of output nodes
         # neurons_per_layer = [64, 10] indicates that we will have two layers:
         # A hidden layer with 64 neurons and a output layer with 10 neurons.
