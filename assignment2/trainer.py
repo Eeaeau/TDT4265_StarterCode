@@ -69,7 +69,7 @@ class BaseTrainer:
 
         global_step = 0
         repetitive_worse = 0  # number of times the loss has been worse than best
-
+        best_loss = np.inf
         for epoch in range(num_epochs):
             train_loader = utils.batch_loader(
                 self.X_train,
