@@ -123,7 +123,7 @@ class SoftmaxModel:
             len(self.neurons_per_layer) - 1
         ):  # -1 since we want the last layer to go through softmax
             Z = Fs @ self.ws[i]
-            Fs = sigmoid(Z,use_improved_sigmoid)
+            Fs = sigmoid(Z, self.use_improved_sigmoid)
 
             # saving the values
             self.Zs.append(Z)
@@ -160,7 +160,7 @@ class SoftmaxModel:
         for l in range(1, len(self.neurons_per_layer)):
             # print(l)
             z = self.Zs[-l]
-            s = sigmoid_prime(z, use_improved_sigmoid)
+            s = sigmoid_prime(z, self.use_improved_sigmoid)
             delta = (delta @ self.ws[-l].T) * s
             self.grads.insert(
                 0, (self.hidden_layer_output[-l - 1].T @ delta) / batch_size

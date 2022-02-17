@@ -63,7 +63,7 @@ def load_full_mnist():
 
 
 def plot_loss(
-    loss_dict: dict, label: str = None, npoints_to_average=1, plot_variance=True
+    loss_dict: dict, label: str = None, npoints_to_average=1, plot_variance=True, title=None
 ):
     """
     Args:
@@ -89,6 +89,8 @@ def plot_loss(
         loss_std.append(np.std(points))
         steps.append(step)
     plt.plot(steps, mean_loss, label=f"{label} (mean over {npoints_to_average} steps)")
+    if title != None:
+        plt.title(title)
     plt.fill_between(
         steps,
         np.array(mean_loss) - np.array(loss_std),

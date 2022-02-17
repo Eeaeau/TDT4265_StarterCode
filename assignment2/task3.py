@@ -38,6 +38,67 @@ if __name__ == "__main__":
     # Example created for comparing with and without shuffling.
     # For comparison, show all loss/accuracy curves in the same plot
     # YOU CAN DELETE EVERYTHING BELOW!
+    use_improved_sigmoid = False
+    use_improved_weight_init = True
+    use_momentum = False
+    model_impw = SoftmaxModel(
+        neurons_per_layer,
+        use_improved_sigmoid,
+        use_improved_weight_init)
+    trainer_impw = SoftmaxTrainer(
+        momentum_gamma, use_momentum,
+        model_impw, learning_rate, batch_size, shuffle_data,
+        X_train, Y_train, X_val, Y_val,
+    )
+    train_history_impw, val_history_impw = trainer_impw.train(num_epochs)
+
+    use_improved_sigmoid = True
+    use_improved_weight_init = False
+    use_momentum = False
+    model_imps = SoftmaxModel(
+        neurons_per_layer,
+        use_improved_sigmoid,
+        use_improved_weight_init)
+    trainer_imps = SoftmaxTrainer(
+        momentum_gamma, use_momentum,
+        model_imps, learning_rate, batch_size, shuffle_data,
+        X_train, Y_train, X_val, Y_val,
+    )
+    train_history_imps, val_history_imps = trainer_imps.train(num_epochs)
+
+
+    use_improved_sigmoid = True
+    use_improved_weight_init = True
+    use_momentum = False
+    model_impsw = SoftmaxModel(
+        neurons_per_layer,
+        use_improved_sigmoid,
+        use_improved_weight_init)
+    trainer_impsw = SoftmaxTrainer(
+        momentum_gamma, use_momentum,
+        model_impsw, learning_rate, batch_size, shuffle_data,
+        X_train, Y_train, X_val, Y_val,
+    )
+    train_history_impsw, val_history_impsw = trainer_impsw.train(num_epochs)
+
+    use_improved_sigmoid = True
+    use_improved_weight_init = True
+    use_momentum = True
+    model_impswm = SoftmaxModel(
+        neurons_per_layer,
+        use_improved_sigmoid,
+        use_improved_weight_init)
+    trainer_impswm = SoftmaxTrainer(
+        momentum_gamma, use_momentum,
+        model_impswm, learning_rate, batch_size, shuffle_data,
+        X_train, Y_train, X_val, Y_val,
+    )
+    train_history_impswm, val_history_impswm = trainer_impswm.train(num_epochs)
+
+    use_improved_sigmoid = False
+    use_improved_weight_init = False
+    use_momentum = False
+
     shuffle_data = False
     model_no_shuffle = SoftmaxModel(
         neurons_per_layer,
@@ -56,13 +117,32 @@ if __name__ == "__main__":
     utils.plot_loss(train_history["loss"],
                     "Task 2 Model", npoints_to_average=10)
     utils.plot_loss(
+        train_history_impw["loss"], "Task 3b Model - improved w", npoints_to_average=10)
+    utils.plot_loss(
+        train_history_imps["loss"], "Task 3a Model - improved sigmoid", npoints_to_average=10)
+    utils.plot_loss(
+        train_history_impsw["loss"], "Task 3b Model - improved sigmoid & w", npoints_to_average=10)
+
+    utils.plot_loss(
+        train_history_impswm["loss"], "Task 3c Model - improved sigmoid & w & momentum", npoints_to_average=10)
+    utils.plot_loss(
         train_history_no_shuffle["loss"], "Task 2 Model - No dataset shuffling", npoints_to_average=10)
     plt.ylim([0, .4])
     plt.subplot(1, 2, 2)
     plt.ylim([0.85, .95])
     utils.plot_loss(val_history["accuracy"], "Task 2 Model")
     utils.plot_loss(
+        val_history_impw["accuracy"], "Task 3b Model - improved w")
+    utils.plot_loss(
+        val_history_imps["accuracy"], "Task 3a Model - improved sigmoid")
+    utils.plot_loss(
+        val_history_impsw["accuracy"], "Task 3b Model - improved sigmoid & w")
+    utils.plot_loss(
+        val_history_impswm["accuracy"], "Task 3c Model - improved sigmoid & w & momentum")
+    utils.plot_loss(
         val_history_no_shuffle["accuracy"], "Task 2 Model - No Dataset Shuffling")
     plt.ylabel("Validation Accuracy")
     plt.legend()
+    plt.savefig("task3c_all.png")
+    plt.savefig("task3c_all_eps.eps")
     plt.show()

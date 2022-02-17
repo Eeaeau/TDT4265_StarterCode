@@ -1,3 +1,4 @@
+from matplotlib import use
 import numpy as np
 import utils
 import matplotlib.pyplot as plt
@@ -61,8 +62,14 @@ class SoftmaxTrainer(BaseTrainer):
 
         logits = self.model.forward(X_batch)
         self.model.backward(X_batch, logits, Y_batch)
-        for idx, w in enumerate(self.model.ws):
-            w -= self.learning_rate * self.model.grads[idx]
+        if self.use_momentum:
+            for idx, w in enumerate(self.model.ws):
+                w -= self.previous_grads[idx] * self.learning_rate
+                self.previous_grads[idx] = self.model.grads[idx] + self.momentum_gamma*self.previous_grads[idx]
+        else:
+            for idx, w in enumerate(self.model.ws):
+                w -= self.learning_rate * self.model.grads[idx]
+                
         self.model.zero_grad()
         loss = cross_entropy_loss(Y_batch, logits)  # sol? nope its snowing now
 
@@ -92,16 +99,16 @@ class SoftmaxTrainer(BaseTrainer):
 if __name__ == "__main__":
     # hyperparameters DO NOT CHANGE IF NOT SPECIFIED IN ASSIGNMENT TEXT
     num_epochs = 50
-    learning_rate = 0.1
+    learning_rate = 0.02 #org 0.1, momentum 0.02
     batch_size = 32
-    neurons_per_layer = [64, 10]
+    neurons_per_layer = [64,64,64,64,64,64,64,64,64,64, 10]
     momentum_gamma = 0.9  # Task 3 hyperparameter
     shuffle_data = True
 
     # Settings for task 3. Keep all to false for task 2.
-    use_improved_sigmoid = False
-    use_improved_weight_init = False
-    use_momentum = False
+    use_improved_sigmoid = True
+    use_improved_weight_init = True
+    use_momentum = True
 
     # Load dataset
     X_train, Y_train, X_val, Y_val = utils.load_full_mnist()
@@ -127,22 +134,23 @@ if __name__ == "__main__":
         Y_val,
     )
     train_history, val_history = trainer.train(num_epochs)
-
+    final_train_loss = f'Final Train Cross Entropy Loss: {cross_entropy_loss(Y_train, model.forward(X_train))}'
     print(
-        "Final Train Cross Entropy Loss:",
-        cross_entropy_loss(Y_train, model.forward(X_train)),
+        final_train_loss,
     )
+    final_val_loss = f'Final Train Cross Entropy Loss: {cross_entropy_loss(Y_val, model.forward(X_val))}'
     print(
-        "Final Validation Cross Entropy Loss:",
-        cross_entropy_loss(Y_val, model.forward(X_val)),
+        final_val_loss,
     )
-    print("Train accuracy:", calculate_accuracy(X_train, Y_train, model))
-    print("Validation accuracy:", calculate_accuracy(X_val, Y_val, model))
+    train_acc = f'Train accuracy: {calculate_accuracy(X_train, Y_train, model)}'
+    print(train_acc)
+    val_acc = f'Validation accuracy: {calculate_accuracy(X_val, Y_val, model)}'
+    print(val_acc)
 
     # Plot loss for first model (task 2c)
     plt.figure(figsize=(20, 12))
     plt.subplot(1, 2, 1)
-    plt.ylim([0.0, 0.5])
+    #plt.ylim([0.0, 0.5])
     utils.plot_loss(train_history["loss"], "Training Loss", npoints_to_average=10)
     utils.plot_loss(val_history["loss"], "Validation Loss")
     plt.legend()
@@ -150,11 +158,11 @@ if __name__ == "__main__":
     plt.ylabel("Cross Entropy Loss - Average")
     # Plot accuracy
     plt.subplot(1, 2, 2)
-    plt.ylim([0.90, 0.99])
+    #plt.ylim([0.90, 0.99])
     utils.plot_loss(train_history["accuracy"], "Training Accuracy")
     utils.plot_loss(val_history["accuracy"], "Validation Accuracy")
     plt.xlabel("Number of Training Steps")
     plt.ylabel("Accuracy")
     plt.legend()
-    plt.savefig("task2c_train_loss.png")
-    #plt.savefig("task2c_train_loss_eps.eps")
+    plt.savefig("task4e_10hlv2_train_loss.png")
+    plt.savefig("task4e_10hlv2_train_loss_eps.eps")
