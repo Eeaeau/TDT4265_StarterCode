@@ -34,9 +34,18 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
         targets.shape == outputs.shape
     ), f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
     # TODO: Implement this function (copy from last assignment)
-    batch_size = targets.size
+    batch_size = targets.shape[0]
 
-    C = -targets.shape[1] / batch_size * np.tensordot(targets, np.log(outputs))
+    C = -(
+        1
+        / batch_size
+        * (targets.T @ np.log(outputs) + (1 - targets).T @ np.log(1 - outputs))
+    )[0, 0]
+
+    assert (
+        targets.shape == outputs.shape
+    ), f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
+
     return C
 
 def sigmoid(x: np.ndarray):
@@ -48,6 +57,14 @@ def sigmoid(x: np.ndarray):
     """
     return 1 / (1 + np.exp(-x))
 
+def sigmoid_prime(x: np.ndarray):
+    """
+    Args:
+        x: ndarray
+    Returns:
+        corresponding sigmoid value
+    """
+    return sigmoid(x)*(1-sigmoid(x))
 
 def softmax(X: np.ndarray):
 
@@ -71,10 +88,13 @@ class SoftmaxModel:
         # Define number of output nodes
         # neurons_per_layer = [64, 10] indicates that we will have two layers:
         # A hidden layer with 64 neurons and a output layer with 10 neurons.
+        #self.number_of_parameters = self.i
         self.neurons_per_layer = neurons_per_layer
         self.hidden_layer_output = []
         self.Zs = []
 
+        # for idx, ne in enumerate(neurons_per_layer):
+        #     self.
         # Initialize the weights
         self.ws = []
         prev = self.I
@@ -82,6 +102,7 @@ class SoftmaxModel:
             w_shape = (prev, size)
             print("Initializing weight to shape:", w_shape)
             w = np.zeros(w_shape)
+            #w = np.random.uniform(-1,1,w_shape) #for 2c
             self.ws.append(w)
             prev = size
         self.grads = [None for i in range(len(self.ws))]
@@ -105,6 +126,7 @@ class SoftmaxModel:
         self.Zs = []
         #dont want to matmul the X with the weights for every layer, so need to store the last layer in a another variable and initiate that variable with X
         Fs = X
+        self.hidden_layer_output.append(Fs)
         for i in range(len(self.neurons_per_layer) - 1): #-1 since we want the last layer to go through softmax
             Z = Fs @ self.ws[i]
             Fs = sigmoid(Z)
@@ -115,7 +137,7 @@ class SoftmaxModel:
         
         #last layer need to be go through softmax
         Z = Fs @ self.ws[-1] #then we have the last output nodes in Fs and can matmul them with the weights
-
+        
         Y = softmax(Z)
 
         return Y
@@ -138,13 +160,15 @@ class SoftmaxModel:
         self.grads = []
         batch_size = X.shape[0]
         delta = -(targets - outputs)
-        #defining the gradient for the first layer
-        init_gradient =(self.hidden_layer_output[0].T @ delta)/ batch_size
+        #defining the gradient
+        init_gradient = (self.hidden_layer_output[-1].T @ delta)/ batch_size
         self.grads.append(init_gradient)
-        for i in range(2,len(self.neurons_per_layer)):
+        
+        for i in range(1,len(self.neurons_per_layer)):
+            print(i)
             z = self.Zs[-i]
-            s = sigmoid(z)
-            delta = (delta @ self.ws[-i].T @ delta) * s
+            s = sigmoid_prime(z)
+            delta = (delta @ self.ws[-i].T) * s
             self.grads.insert(0,(self.hidden_layer_output[-i-1].T @ delta)/batch_size)
             
 
