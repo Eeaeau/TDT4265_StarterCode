@@ -60,7 +60,7 @@ def sigmoid(X, use_improved_sigmoid=False):
 def sigmoid_prime(X, use_improved_sigmoid=False):
     if use_improved_sigmoid:
         # return 1.14393 / (np.cosh(2 * X / 3) ** 2)
-        return 2.28787 / (np.cosh(4 * X / 3 + 1))
+        return 1.7159 * 2 / 3 * (1 - (np.tanh(2 * X / 3) ** 2))
     else:
         return sigmoid(X, False) * (1 - sigmoid(X, False))
 
