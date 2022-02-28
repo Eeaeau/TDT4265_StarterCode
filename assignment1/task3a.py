@@ -1,6 +1,8 @@
 import numpy as np
+from urllib3 import Retry
 import utils
 from task2a import pre_process_images
+
 np.random.seed(1)
 
 
@@ -13,19 +15,29 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
         Cross entropy error (float)
     """
     # TODO implement this function (Task 3a)
-    assert targets.shape == outputs.shape,\
-        f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    raise NotImplementedError
+    assert (
+        targets.shape == outputs.shape
+    ), f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
+
+    batch_size = targets.size
+
+    C = -targets.shape[1] / batch_size * np.tensordot(targets, np.log(outputs))
+
+    return C
+
+
+def softmax(X: np.ndarray):
+
+    return np.exp(X) / np.sum(np.exp(X), axis=1)[:, None]
 
 
 class SoftmaxModel:
-
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
 
         # Define number of output nodes
-        self.num_outputs = None
+        self.num_outputs = 10
         self.w = np.zeros((self.I, self.num_outputs))
         self.grad = None
 
@@ -39,7 +51,10 @@ class SoftmaxModel:
             y: output of model with shape [batch size, num_outputs]
         """
         # TODO implement this function (Task 3a)
-        return None
+
+        Y = softmax(X @ self.w)
+
+        return Y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -51,13 +66,23 @@ class SoftmaxModel:
             targets: labels/targets of each image of shape: [batch size, num_classes]
         """
         # TODO implement this function (Task 3a)
-        # To implement L2 regularization task (4b) you can get the lambda value in self.l2_reg_lambda 
+        # To implement L2 regularization task (4b) you can get the lambda value in self.l2_reg_lambda
         # which is defined in the constructor.
-        assert targets.shape == outputs.shape,\
-            f"Output shape: {outputs.shape}, targets: {targets.shape}"
+        assert (
+            targets.shape == outputs.shape
+        ), f"Output shape: {outputs.shape}, targets: {targets.shape}"
         self.grad = np.zeros_like(self.w)
-        assert self.grad.shape == self.w.shape,\
-             f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
+
+        batch_size = X.shape[0]
+
+        self.grad = (
+            -1 / batch_size * np.matmul(X.T, (targets - outputs))
+            + self.l2_reg_lambda * self.w
+        )
+
+        assert (
+            self.grad.shape == self.w.shape
+        ), f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
 
     def zero_grad(self) -> None:
         self.grad = None
@@ -72,15 +97,28 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
         Y: shape [Num examples, num classes]
     """
     # TODO implement this function (Task 3a)
-    raise NotImplementedError
+    # raise NotImplementedError
+
+    encoding = np.zeros((Y.size, num_classes))
+
+    # for i, val in enumerate(Y):
+    #     encoding[i][val[0]] = 1
+
+    encoding[np.arange(Y.size), Y.ravel()] = 1  # inspired by keras
+
+    # print(encoding)
+
+    return encoding
 
 
 def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):
     """
-        Numerical approximation for gradients. Should not be edited. 
+        Numerical approximation for gradients. Should not be edited.
         Details about this test is given in the appendix in the assignment.
     """
-    w_orig = np.random.normal(loc=0, scale=1/model.w.shape[0]**2, size=model.w.shape)
+    w_orig = np.random.normal(
+        loc=0, scale=1 / model.w.shape[0] ** 2, size=model.w.shape
+    )
 
     epsilon = 1e-3
     for i in range(model.w.shape[0]):
@@ -99,11 +137,12 @@ def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarra
             logits = model.forward(X)
             model.backward(X, logits, Y)
             difference = gradient_approximation - model.grad[i, j]
-            assert abs(difference) <= epsilon**2,\
-                f"Calculated gradient is incorrect. " \
-                f"Approximation: {gradient_approximation}, actual gradient: {model.grad[i, j]}\n" \
-                f"If this test fails there could be errors in your cross entropy loss function, " \
+            assert abs(difference) <= epsilon ** 2, (
+                f"Calculated gradient is incorrect. "
+                f"Approximation: {gradient_approximation}, actual gradient: {model.grad[i, j]}\n"
+                f"If this test fails there could be errors in your cross entropy loss function, "
                 f"forward function or backward function"
+            )
 
 
 if __name__ == "__main__":
@@ -111,21 +150,25 @@ if __name__ == "__main__":
     Y = np.zeros((1, 1), dtype=int)
     Y[0, 0] = 3
     Y = one_hot_encode(Y, 10)
-    assert Y[0, 3] == 1 and Y.sum() == 1, \
-        f"Expected the vector to be [0,0,0,1,0,0,0,0,0,0], but got {Y}"
+    assert (
+        Y[0, 3] == 1 and Y.sum() == 1
+    ), f"Expected the vector to be [0,0,0,1,0,0,0,0,0,0], but got {Y}"
 
     X_train, Y_train, *_ = utils.load_full_mnist()
     X_train = pre_process_images(X_train)
     Y_train = one_hot_encode(Y_train, 10)
-    assert X_train.shape[1] == 785,\
-        f"Expected X_train to have 785 elements per image. Shape was: {X_train.shape}"
+    assert (
+        X_train.shape[1] == 785
+    ), f"Expected X_train to have 785 elements per image. Shape was: {X_train.shape}"
 
     # Simple test for forward pass. Note that this does not cover all errors!
     model = SoftmaxModel(0.0)
     logits = model.forward(X_train)
     np.testing.assert_almost_equal(
-        logits.mean(), 1/10,
-        err_msg="Since the weights are all 0's, the softmax activation should be 1/10")
+        logits.mean(),
+        1 / 10,
+        err_msg="Since the weights are all 0's, the softmax activation should be 1/10",
+    )
 
     # Gradient approximation check for 100 images
     X_train = X_train[:100]
