@@ -3,7 +3,6 @@ import mnist
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(0)
 
 def batch_loader(
     X: np.ndarray, Y: np.ndarray, batch_size: int, shuffle=False, drop_last=True
@@ -59,36 +58,18 @@ def binary_prune_dataset(class1: int, class2: int, X: np.ndarray, Y: np.ndarray)
     return X[mask_total], Y_binary[mask_total]
 
 
-def load_binary_dataset(class1: int, class2: int, train_size: int = 18000, test_size: int = 2000, sample_stochastic: bool = True):
+def load_binary_dataset(class1: int, class2: int):
     """
     Loads, prunes and splits the dataset into train, and validation.
-    Args:
-        train_size: Number of training samples
-        test_size: Number of validation samples
-        sample_stochastic: If True, the subset is sampled stochastically.
-
-    Returns:
-        X_train: images of shape [train_size, 784] in the range (0, 255)
-        Y_train: labels of shape [train_size]
-        X_val: images of shape [test_size, 784] in the range (0, 255)
-        Y_val: labels of shape [test_size]
     """
+    train_size = 20000
+    val_size = 10000
     X_train, Y_train, X_val, Y_val = mnist.load()
 
-
-    if sample_stochastic:
-        train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
-        val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
-    else:
-        # Default to first 'train_size' of train set images for training
-        # and last 'test_size' from test set images for validation
-        train_idx = np.arange(train_size)
-        val_idx = np.arange(X_val.shape[0] - test_size, X_val.shape[0])
-
-    # Sub set sampling
-    X_train, Y_train = X_train[train_idx], Y_train[train_idx]
-    X_val, Y_val = X_val[val_idx], Y_val[val_idx]
-
+    # First 20000 images from train set
+    X_train, Y_train = X_train[:train_size], Y_train[:train_size]
+    # Last 2000 images from test set
+    X_val, Y_val = X_val[:val_size], Y_val[:val_size]
     X_train, Y_train = binary_prune_dataset(
         class1, class2, X_train, Y_train
     )
@@ -105,35 +86,18 @@ def load_binary_dataset(class1: int, class2: int, train_size: int = 18000, test_
     return X_train, Y_train, X_val, Y_val
 
 
-def load_full_mnist(train_size: int = 18000, test_size: int = 2000, sample_stochastic: bool = True):
+def load_full_mnist():
     """
     Loads and splits the dataset into train, validation and test.
-    Args:
-        train_size: Number of training samples
-        test_size: Number of validation samples
-        sample_stochastic: If True, the subset is sampled stochastically.
-
-    Returns:
-        X_train: images of shape [train_size, 784] in the range (0, 255)
-        Y_train: labels of shape [train_size]
-        X_val: images of shape [test_size, 784] in the range (0, 255)
-        Y_val: labels of shape [test_size]
     """
+    train_size = 20000
+    test_size = 10000
     X_train, Y_train, X_val, Y_val = mnist.load()
 
-    if sample_stochastic:
-        train_idx = np.random.choice(X_train.shape[0], train_size, replace=False)
-        val_idx = np.random.choice(X_val.shape[0], test_size, replace=False)
-    else:
-        # Default to first 'train_size' of train set images for training
-        # and last 'test_size' from test set images for validation
-        train_idx = np.arange(train_size)
-        val_idx = np.arange(X_val.shape[0] - test_size, X_val.shape[0])
-
-    # Sub set sampling
-    X_train, Y_train = X_train[train_idx], Y_train[train_idx]
-    X_val, Y_val = X_val[val_idx], Y_val[val_idx]
-
+    # First 20000 images from train set
+    X_train, Y_train = X_train[:train_size], Y_train[:train_size]
+    # Last 2000 images from test set
+    X_val, Y_val = X_val[-test_size:], Y_val[-test_size:]
     # Reshape to (N, 1)
     Y_train = Y_train.reshape(-1, 1)
     Y_val = Y_val.reshape(-1, 1)
