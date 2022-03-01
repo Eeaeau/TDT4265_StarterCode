@@ -30,7 +30,10 @@ def compute_loss_and_accuracy(
             Y_batch = utils.to_cuda(Y_batch)
             # Forward pass the images through our model
             output_probs = model(X_batch)
-
+            average_loss += loss_criterion(output_probs,Y_batch)
+            #_, pred = output_probs.data.max(1) #gives issues with memory
+            _, pred = torch.max(output_probs.data,1)
+            accuracy += (pred == Y_batch).float().mean()
             # Compute Loss and Accuracy
 
     return average_loss, accuracy
