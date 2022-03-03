@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from dataloaders import load_cifar10, load_cifar10_aug1,load_cifar10_aug2, load_cifar10_aug3, load_cifar10_aug4, load_cifar10_aug5, load_cifar10_aug6, load_cifar10_aug7, load_cifar10_aug8
 from trainer import Trainer
-from models import modelv2, modelv3, modelv4, modelv5
+from models import modelv2, modelv3, modelv4, modelv5, modelv6
 
 
 
@@ -114,11 +114,12 @@ def main():
     utils.set_seed(0)
     epochs = 25
     batch_size = 64
-    learning_rate = 5e-2
+    #learning_rate = 5e-2
+    learning_rate = 3e-4 #adam
     early_stop_count = 10
     dataloaders = load_cifar10_aug7(batch_size)
     #model = ExampleModel(image_channels=3, num_classes=10)
-    model1 = modelv5(image_channels=3, num_classes=10)
+    model1 = modelv6(image_channels=3, num_classes=10)
     # trainer = Trainer(
     #     batch_size,
     #     learning_rate,
@@ -138,7 +139,7 @@ def main():
         dataloaders
     )
     trainer1.train()
-    create_plots(trainer1, "task3_aug7_modv5_modv4_wdropout_adam")
+    create_plots(trainer1, "task3_aug7_modv6_modv4_wdropout_adam_batnorm")
 
 if __name__ == "__main__":
     main()
