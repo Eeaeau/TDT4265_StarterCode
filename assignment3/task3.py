@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import utils
 import torch
 from torch import nn
-from dataloaders import load_cifar10
+from dataloaders import load_cifar10, load_cifar10_aug1,load_cifar10_aug2, load_cifar10_aug3, load_cifar10_aug4, load_cifar10_aug5, load_cifar10_aug6, load_cifar10_aug7, load_cifar10_aug8
 from trainer import Trainer
 
 
@@ -108,11 +108,11 @@ def main():
     # You can try to change this and check if you still get the same result!
     
     utils.set_seed(0)
-    epochs = 10
+    epochs = 15
     batch_size = 64
     learning_rate = 5e-2
     early_stop_count = 4
-    dataloaders = load_cifar10(batch_size)
+    dataloaders = load_cifar10_aug7(batch_size)
     model = ExampleModel(image_channels=3, num_classes=10)
     trainer = Trainer(
         batch_size,
@@ -123,7 +123,7 @@ def main():
         dataloaders
     )
     trainer.train()
-    create_plots(trainer, "task2")
+    create_plots(trainer, "task3_aug7_newFilter")
 
 if __name__ == "__main__":
     main()
