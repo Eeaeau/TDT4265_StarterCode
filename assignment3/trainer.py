@@ -4,7 +4,7 @@ import time
 import collections
 import utils
 import pathlib
-
+from tqdm import tqdm
 
 def compute_loss_and_accuracy(
         dataloader: torch.utils.data.DataLoader,
@@ -68,8 +68,10 @@ class Trainer:
         print(self.model)
 
         # Define our optimizer. SGD = Stochastich Gradient Descent
-        self.optimizer = torch.optim.SGD(self.model.parameters(),
-                                         self.learning_rate)
+        # self.optimizer = torch.optim.SGD(self.model.parameters(),
+        #                                  self.learning_rate)
+        self.optimizer = torch.optim.Adam(self.model.parameters(),
+                                          self.learning_rate)
 
         # Load our dataset
         self.dataloader_train, self.dataloader_val, self.dataloader_test = dataloaders
@@ -169,17 +171,18 @@ class Trainer:
         for epoch in range(self.epochs):
             self.epoch = epoch
             # Perform a full pass through all the training samples
-            for X_batch, Y_batch in self.dataloader_train:
-                loss = self.train_step(X_batch, Y_batch)
-                self.train_history["loss"][self.global_step] = loss
-                self.global_step += 1
-                # Compute loss/accuracy for validation set
-                if should_validate_model():
-                    self.validation_step()
-                    self.save_model()
-                    if self.should_early_stop():
-                        print("Early stopping.")
-                        return
+            with tqdm(self.dataloader_train, unit="batch") as tepoch:
+                for X_batch, Y_batch in tepoch:
+                    loss = self.train_step(X_batch, Y_batch)
+                    self.train_history["loss"][self.global_step] = loss
+                    self.global_step += 1
+                    # Compute loss/accuracy for validation set
+                    if should_validate_model():
+                        self.validation_step()
+                        self.save_model()
+                        if self.should_early_stop():
+                            print("Early stopping.")
+                            return
 
     def save_model(self):
         def is_best_model():
