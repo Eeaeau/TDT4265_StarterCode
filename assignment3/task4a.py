@@ -30,10 +30,11 @@ def main():
     # You can try to change this and check if you still get the same result!
 
     utils.set_seed(0)
-    epochs = 15
+    epochs = 25
     batch_size = 32
     learning_rate = 5e-4
-    early_stop_count = 5
+    #learning_rate = 3e-4
+    early_stop_count = 10
     dataloaders = load_cifar10_aug_ResNet(batch_size)
     model = ResNetModel()
 
@@ -49,7 +50,7 @@ def main():
 
     trainer.train()
 
-    create_plots(trainer, "task4a")
+    create_plots(trainer, "task4a_sgd")
 
 if __name__ == "__main__":
     main()
