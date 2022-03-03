@@ -96,21 +96,25 @@ def create_plots(trainer: Trainer, name: str):
     plt.figure(figsize=(20, 8))
     plt.subplot(1, 2, 1)
     plt.title("Cross Entropy Loss")
+    plt.ylabel("CEL")
+    plt.xlabel("Step")
     utils.plot_loss(trainer.train_history["loss"], label="Training loss", npoints_to_average=10)
     utils.plot_loss(trainer.validation_history["loss"], label="Validation loss")
     plt.legend()
     plt.subplot(1, 2, 2)
     plt.title("Accuracy")
+    plt.ylabel("Procentage")
+    plt.xlabel("Step")
     utils.plot_loss(trainer.validation_history["accuracy"], label="Validation Accuracy")
     plt.legend()
-    plt.savefig(plot_path.joinpath(f"{name}_plot.png"))
+    plt.savefig(plot_path.joinpath(f"{name}_plot.esp"))
     plt.show()
 
 
 def main():
     # Set the random generator seed (parameters, shuffling etc).
     # You can try to change this and check if you still get the same result!
-    
+
     utils.set_seed(0)
     epochs = 25
     batch_size = 64
