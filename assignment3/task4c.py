@@ -1,3 +1,4 @@
+from distutils.command.build_scripts import first_line_re
 import enum
 import imp
 from operator import mod
@@ -28,7 +29,7 @@ def torch_image_to_numpy(image: torch.Tensor):
     image = np.moveaxis(image, 0, 2)
     return image
 
-def layer_plotter(layers, filters, indices, name: str):
+def layer_plotter(activations, indices, name: str):
     plot_path = pathlib.Path("plots")
     plot_path.mkdir(exist_ok=True)
     # Save plots and show them
@@ -36,23 +37,26 @@ def layer_plotter(layers, filters, indices, name: str):
 
     n_layers = len(indices)
 
-    plt.title("Filter weight")
+    plt.title("Activations")
 
     for n, i in enumerate(indices):
 
-        plt.subplot(2, n_layers, n+1)
-        filter = torch_image_to_numpy(filters[i])
-        # im = np.moveaxis(filter, 0, -1)
-        # im = np.rollaxis(filter, 0, 3)
+        plt.subplot(2, n_layers//2, n+1)
 
-        plt.imshow(filter)
-
-        plt.subplot(2, n_layers, n+1+n_layers)
-        im =layers[i].numpy()
+        im =activations[i].numpy()
         plt.imshow(im)
+
 
     plt.savefig(plot_path.joinpath(f"{name}_plot.eps"))
     plt.show()
+
+
+def plot_hook(model, model_in, model_out):
+
+    indices = range(10)
+    activations_extracted = model_out[0].detach().cpu()
+
+    layer_plotter(activations_extracted, indices, "task4c_plot")
 
 def main():
     image = Image.open("images/zebra.jpg")
@@ -60,10 +64,11 @@ def main():
 
     model = torchvision.models.resnet18(pretrained=True)
     print(model)
+
     first_conv_layer = model.conv1
 
-    print("First conv layer weight shape:", first_conv_layer.weight.shape)
-    print("First conv layer:", first_conv_layer)
+    print("Last conv layer weight shape:", first_conv_layer.weight.shape)
+    print("Last conv layer:", first_conv_layer)
 
     # Resize, and normalize the image with the mean and standard deviation
     image_transform = torchvision.transforms.Compose([
@@ -77,12 +82,11 @@ def main():
     activation = first_conv_layer(image)
     print("Activation shape:", activation.shape)
 
-    indices = [14, 26, 32, 49, 52]
+    last_conv_layer = model.layer4[1].conv2
+    # run after a forwarding is updates conv2 in last layer
+    last_conv_layer.register_forward_hook(plot_hook)
 
-    filters = first_conv_layer.weight
-
-    activations_extracted = activation[0].detach().cpu()
-    layer_plotter(activations_extracted, filters, indices, "task4b_plot")
+    model(image)
 
 
 if __name__ == "__main__":
