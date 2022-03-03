@@ -26,33 +26,22 @@ def torch_image_to_numpy(image: torch.Tensor):
     image = np.moveaxis(image, 0, 2)
     return image
 
-def layer_plotter(layer, indices, name: str):
+def layer_plotter(layers, indices, name: str):
     plot_path = pathlib.Path("plots")
     plot_path.mkdir(exist_ok=True)
     # Save plots and show them
-    plt.figure(figsize=(20, 8))
+    plt.figure(figsize=(20, 5))
 
     n_layers = len(indices)
 
+    plt.title("Filter weight")
+
     for n in range(n_layers):
-
-        plt.subplot(1, n_layers, n)
-    plt.title("Cross Entropy Loss")
-    plt.ylabel("CEL")
-    plt.xlabel("Step")
-
-    utils.plot_loss(trainer.train_history["loss"], label="Training loss", npoints_to_average=10)
-    utils.plot_loss(trainer.validation_history["loss"], label="Validation loss")
-    plt.legend()
-
-
-
-    # plt.subplot(1, 2, 2)
-    # plt.title("Accuracy")
-    # plt.ylabel("Procentage")
-    # plt.xlabel("Step")
-    # utils.plot_loss(trainer.validation_history["accuracy"], label="Validation Accuracy")
-    # plt.legend()
+        plt.subplot(1, n_layers, n+1)
+        # plt.ylabel("CEL")
+        # plt.xlabel("Step")
+        im =layers[indices[n]].numpy()
+        plt.imshow(im)
 
 
     plt.savefig(plot_path.joinpath(f"{name}_plot.eps"))
@@ -63,7 +52,7 @@ def main():
     print("Image shape:", image.size)
 
     model = torchvision.models.resnet18(pretrained=True)
-    print(model)
+    # print(model)
     first_conv_layer = model.conv1
     print("First conv layer weight shape:", first_conv_layer.weight.shape)
     print("First conv layer:", first_conv_layer)
@@ -81,11 +70,9 @@ def main():
     print("Activation shape:", activation.shape)
 
     indices = [14, 26, 32, 49, 52]
+    layers = activation[0].detach().cpu()
 
-    fig, ax = plt.subplot()
-
-
-    layer_plotter(activation, indices, "4b")
+    layer_plotter(layers, indices, "task4b_plot")
 
 
 
