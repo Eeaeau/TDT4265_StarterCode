@@ -5,6 +5,8 @@ import torch
 from torch import nn
 from dataloaders import load_cifar10, load_cifar10_aug1,load_cifar10_aug2, load_cifar10_aug3, load_cifar10_aug4, load_cifar10_aug5, load_cifar10_aug6, load_cifar10_aug7, load_cifar10_aug8
 from trainer import Trainer
+from models import modelv2, modelv3, modelv4, modelv5
+
 
 
 class ExampleModel(nn.Module):
@@ -22,32 +24,34 @@ class ExampleModel(nn.Module):
         # TODO: Implement this function (Task  2a)
         num_filters = 32  # Set number of filters in first conv layer
         self.num_classes = num_classes
+        filter_size = 5
+        pad = 2
         # Define the convolutional layers
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(
                 in_channels=image_channels,
                 out_channels=num_filters,
-                kernel_size=5,
+                kernel_size=filter_size,
                 stride=1,
-                padding=2
+                padding=pad
             ),
             nn.ReLU(),
             nn.MaxPool2d([2,2], stride=2),
             nn.Conv2d(
                 in_channels=num_filters,
                 out_channels=64,
-                kernel_size=5,
+                kernel_size=filter_size,
                 stride=1,
-                padding=2
+                padding=pad
             ),
             nn.ReLU(),
             nn.MaxPool2d([2,2], stride=2),
             nn.Conv2d(
                 in_channels=64,
                 out_channels=128,
-                kernel_size=5,
+                kernel_size=filter_size,
                 stride=1,
-                padding=2
+                padding=pad
             ),
             nn.ReLU(),
             nn.MaxPool2d([2,2], stride=2),
@@ -108,22 +112,33 @@ def main():
     # You can try to change this and check if you still get the same result!
     
     utils.set_seed(0)
-    epochs = 15
+    epochs = 25
     batch_size = 64
     learning_rate = 5e-2
-    early_stop_count = 4
+    early_stop_count = 10
     dataloaders = load_cifar10_aug7(batch_size)
-    model = ExampleModel(image_channels=3, num_classes=10)
-    trainer = Trainer(
+    #model = ExampleModel(image_channels=3, num_classes=10)
+    model1 = modelv5(image_channels=3, num_classes=10)
+    # trainer = Trainer(
+    #     batch_size,
+    #     learning_rate,
+    #     early_stop_count,
+    #     epochs,
+    #     model,
+    #     dataloaders
+    # )
+    #trainer.train()
+    #create_plots(trainer, "task3_aug7_base")
+    trainer1 = Trainer(
         batch_size,
         learning_rate,
         early_stop_count,
         epochs,
-        model,
+        model1,
         dataloaders
     )
-    trainer.train()
-    create_plots(trainer, "task3_aug7_newFilter")
+    trainer1.train()
+    create_plots(trainer1, "task3_aug7_modv5_modv4_wdropout_adam")
 
 if __name__ == "__main__":
     main()
