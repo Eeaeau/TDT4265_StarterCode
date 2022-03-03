@@ -107,7 +107,7 @@ def create_plots(trainer: Trainer, name: str):
     plt.xlabel("Step")
     utils.plot_loss(trainer.validation_history["accuracy"], label="Validation Accuracy")
     plt.legend()
-    plt.savefig(plot_path.joinpath(f"{name}_plot.esp"))
+    plt.savefig(plot_path.joinpath(f"{name}_plot.eps"))
     plt.show()
 
 
