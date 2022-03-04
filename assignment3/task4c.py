@@ -55,6 +55,7 @@ def plot_hook(model, model_in, model_out):
 
     indices = range(10)
     activations_extracted = model_out[0].detach().cpu()
+    print("Last conv layer shape:", activations_extracted.shape)
 
     layer_plotter(activations_extracted, indices, "task4c_plot")
 
@@ -65,11 +66,6 @@ def main():
     model = torchvision.models.resnet18(pretrained=True)
     print(model)
 
-    first_conv_layer = model.conv1
-
-    print("Last conv layer weight shape:", first_conv_layer.weight.shape)
-    print("Last conv layer:", first_conv_layer)
-
     # Resize, and normalize the image with the mean and standard deviation
     image_transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize((224, 224)),
@@ -79,15 +75,11 @@ def main():
     image = image_transform(image)[None]
     print("Image shape:", image.shape)
 
-    activation = first_conv_layer(image)
-    print("Activation shape:", activation.shape)
-
     last_conv_layer = model.layer4[1].conv2
-    # run after a forwarding is updates conv2 in last layer
+    # execute after forwarding updates conv2 in last layer
     last_conv_layer.register_forward_hook(plot_hook)
 
     model(image)
-
 
 if __name__ == "__main__":
     main()
