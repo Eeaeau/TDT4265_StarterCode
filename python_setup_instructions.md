@@ -7,7 +7,7 @@
 **Anaconda Virtual environment:** Once you have Anaconda installed, it makes sense to create a virtual environment for the course. If you choose not to use a virtual environment, it is up to you to make sure that all dependencies for the code are installed globally on your machine. To set up a virtual environment, run (in a terminal) 
 
 ```bash
-conda create -n tdt4265 python=3.6 anaconda
+conda create -n tdt4265 python=3.8 anaconda
 ```
 
 to create a environment called `tdt4265`. 
