@@ -16,11 +16,29 @@ def calculate_iou(prediction_box, gt_box):
             float: value of the intersection of union for the two boxes.
     """
     # YOUR CODE HERE
-
+    intersect_width = max(
+        0, min(prediction_box[2], gt_box[2]) - max(prediction_box[0], gt_box[0])
+    )
+    intersect_height = max(
+        0, min(prediction_box[3], gt_box[3]) - max(prediction_box[1], gt_box[1])
+    )
     # Compute intersection
 
+    intersect_area = intersect_width * intersect_height
+
+    predict_width = prediction_box[2] - prediction_box[0]
+    predict_height = prediction_box[3] - prediction_box[1]
+
+    predict_area = max(0, predict_width * predict_height)
+
+    gt_width = gt_box[2] - gt_box[0]
+    gt_height = gt_box[3] - gt_box[1]
+
+    gt_area = max(0, gt_width * gt_height)
+
     # Compute union
-    iou = 0
+    iou = intersect_area / float(predict_area + gt_area - intersect_area)
+    print(iou)
     assert iou >= 0 and iou <= 1
     return iou
 
@@ -36,7 +54,12 @@ def calculate_precision(num_tp, num_fp, num_fn):
     Returns:
         float: value of precision
     """
-    raise NotImplementedError
+
+    total_predicted_positives = num_tp + num_fp
+    if total_predicted_positives > 0:
+        return num_tp / float(total_predicted_positives)
+
+    return 1
 
 
 def calculate_recall(num_tp, num_fp, num_fn):
@@ -74,12 +97,9 @@ def get_all_box_matches(prediction_boxes, gt_boxes, iou_threshold):
     """
     # Find all possible matches with a IoU >= iou threshold
 
-
     # Sort all matches on IoU in descending order
 
     # Find all matches with the highest IoU threshold
-
-
 
     return np.array([]), np.array([])
 
@@ -106,7 +126,8 @@ def calculate_individual_image_result(prediction_boxes, gt_boxes, iou_threshold)
 
 
 def calculate_precision_recall_all_images(
-    all_prediction_boxes, all_gt_boxes, iou_threshold):
+    all_prediction_boxes, all_gt_boxes, iou_threshold
+):
     """Given a set of prediction boxes and ground truth boxes for all images,
        calculates recall and precision over all images
        for a single image.
@@ -158,7 +179,7 @@ def get_precision_recall_curve(
     confidence_thresholds = np.linspace(0, 1, 500)
     # YOUR CODE HERE
 
-    precisions = [] 
+    precisions = []
     recalls = []
     return np.array(precisions), np.array(recalls)
 
@@ -231,7 +252,8 @@ def mean_average_precision(ground_truth_boxes, predicted_boxes):
         confidence_scores.append(scores)
 
     precisions, recalls = get_precision_recall_curve(
-        all_prediction_boxes, all_gt_boxes, confidence_scores, 0.5)
+        all_prediction_boxes, all_gt_boxes, confidence_scores, 0.5
+    )
     plot_precision_recall_curve(precisions, recalls)
     mean_average_precision = calculate_mean_average_precision(precisions, recalls)
     print("Mean average precision: {:.4f}".format(mean_average_precision))
