@@ -1,6 +1,48 @@
 import torch
+import torch.nn as nn
 from typing import Tuple, List
 
+#As the layers are pretty much the same except for the first layer I think it is nicer to create a class that contains the backbbones of the layers, I have seen other networks created like this(ex mobilenet)
+class InitLayer(torch.nn.Sequential):
+    def __init__(self,
+            num_in_channels,
+            num_out_channels,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            max_pool_stride=2,
+            maxpool_kernel_size=2):
+        super().__init__(
+            nn.Conv2d(in_channels=num_in_channels, out_channels=32, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride, padding=padding),
+            
+        )
+
+#dont quite understand why its a relu output of the init layer and as an input and output in the rest of the layers, removed it as i got an error about size
+class ConvLayer(torch.nn.Sequential):
+    def __init__(self,
+            num_in_channels,
+            num_out_channels,
+            kernel_size=3,
+            stride1=1,
+            stride2=2,
+            padding1=1,
+            padding2=1
+            ):
+        super().__init__(
+            nn.ReLU(),
+            nn.Conv2d(in_channels=num_in_channels, out_channels=num_in_channels, kernel_size=kernel_size, stride=stride1, padding=padding1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=num_in_channels, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride2, padding=padding2),
+        )
 
 class BasicModel(torch.nn.Module):
     """
@@ -20,6 +62,16 @@ class BasicModel(torch.nn.Module):
         super().__init__()
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
+        self.model = nn.ModuleList()
+
+        #adding the layers
+        self.model.append(InitLayer(image_channels, output_channels[0]))
+        self.model.append(ConvLayer(output_channels[0], output_channels[1]))
+        self.model.append(ConvLayer(output_channels[1], output_channels[2]))
+        self.model.append(ConvLayer(output_channels[2], output_channels[3]))
+        self.model.append(ConvLayer(output_channels[3], output_channels[4]))
+        self.model.append(ConvLayer(output_channels[4], output_channels[5], stride2=1, padding2=0))
+
 
     def forward(self, x):
         """
@@ -35,6 +87,10 @@ class BasicModel(torch.nn.Module):
             shape(-1, output_channels[0], 38, 38),
         """
         out_features = []
+        for layer in self.model:
+            x = layer(x)
+            out_features.append(x)
+            
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
