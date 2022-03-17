@@ -14,16 +14,15 @@ class InitLayer(torch.nn.Sequential):
             maxpool_kernel_size=2):
         super().__init__(
             nn.Conv2d(in_channels=num_in_channels, out_channels=32, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
             nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride, padding=padding),
-            
+            nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=2, padding=padding),
+            nn.ReLU(),
         )
 
 #dont quite understand why its a relu output of the init layer and as an input and output in the rest of the layers, removed it as i got an error about size
@@ -38,10 +37,10 @@ class ConvLayer(torch.nn.Sequential):
             padding2=1
             ):
         super().__init__(
-            nn.ReLU(),
             nn.Conv2d(in_channels=num_in_channels, out_channels=num_in_channels, kernel_size=kernel_size, stride=stride1, padding=padding1),
             nn.ReLU(),
             nn.Conv2d(in_channels=num_in_channels, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride2, padding=padding2),
+            nn.ReLU(),
         )
 
 class BasicModel(torch.nn.Module):
@@ -89,6 +88,7 @@ class BasicModel(torch.nn.Module):
         out_features = []
         for layer in self.model:
             x = layer(x)
+            print(x.shape)
             out_features.append(x)
             
         for idx, feature in enumerate(out_features):
