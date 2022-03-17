@@ -5,7 +5,7 @@ from ssd.modeling import SSD300, SSDMultiboxLoss, backbones, AnchorBoxes
 from tops.config import LazyCall as L
 from ssd.data.mnist import MNISTDetectionDataset
 from ssd import utils
-from ssd.data.transforms import  Normalize, ToTensor, GroundTruthBoxesToAnchors
+from ssd.data.transforms import  Normalize, ToTensor, GroundTruthBoxesToAnchors, ColorJitter, RandomHorizontalFlip, RandomSampleCrop
 from ssd.data.mnist import MNISTDetectionDataset
 from .utils import get_dataset_dir, get_output_dir
 
@@ -14,7 +14,7 @@ train = dict(
     amp=True, # Automatic mixed precision
     log_interval=20,
     seed=0,
-    epochs=50,
+    epochs=33,
     _output_dir=get_output_dir(),
     imshape=(300, 300),
     image_channels=3
@@ -35,7 +35,7 @@ anchors = L(AnchorBoxes)(
     scale_size_variance=0.2
 )
 
-backbone = L(backbones.BasicModel)(
+backbone = L(backbones.ModelV1)(
     output_channels=[128, 256, 128, 128, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
@@ -65,16 +65,20 @@ data_train=dict(
             L(ToTensor)(), # ToTensor has to be applied before conversion to anchors.
             # GroundTruthBoxesToAnchors assigns each ground truth to anchors, required to compute loss in training.
             L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),
+            L(RandomHorizontalFlip)(),
+            L(RandomSampleCrop)(),
         ])
     ),
     dataloader=L(torch.utils.data.DataLoader)(
-        dataset="${..dataset}", num_workers=4, pin_memory=True, shuffle=True, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate,
+        dataset="${..dataset}", num_workers=0, pin_memory=True, shuffle=True, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate,
         drop_last=True
     ),
+    #num workers changed from 4 to 0 bc of windows?
     # GPU transforms can heavily speedup data augmentations.
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
-        L(Normalize)(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]) # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
-    ])
+        L(Normalize)(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]), # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
+        L(ColorJitter)(brightness=0.2, contrast=0.3, saturation=0.3, hue=0.2),
+    ]),
 )
 data_val=dict(
     dataset=L(MNISTDetectionDataset)(
@@ -85,8 +89,9 @@ data_val=dict(
         ])
     ),
     dataloader=L(torch.utils.data.DataLoader)(
-       dataset="${..dataset}", num_workers=4, pin_memory=True, shuffle=False, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate_val
+       dataset="${..dataset}", num_workers=0, pin_memory=True, shuffle=False, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate_val
     ),
+    #num workers changed from 4 to 0 bc of windows?
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
         L(Normalize)(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
