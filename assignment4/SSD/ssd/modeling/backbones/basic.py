@@ -88,7 +88,6 @@ class BasicModel(torch.nn.Module):
         out_features = []
         for layer in self.model:
             x = layer(x)
-            print(x.shape)
             out_features.append(x)
             
         for idx, feature in enumerate(out_features):
