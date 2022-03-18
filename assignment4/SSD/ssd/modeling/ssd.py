@@ -1,8 +1,8 @@
-
 import torch
 import torch.nn as nn
 from .anchor_encoder import AnchorEncoder
 from torchvision.ops import batched_nms
+
 
 class SSD300(nn.Module):
     def __init__(self, 
@@ -17,7 +17,7 @@ class SSD300(nn.Module):
         """
 
         self.feature_extractor = feature_extractor
-        self.loss_func = loss_objective(anchors=anchors)
+        self.loss_func = loss_objective
         self.num_classes = num_classes
         self.regression_heads = []
         self.classification_heads = []
@@ -108,4 +108,3 @@ def filter_predictions(
         # 3. Only keep max_output best boxes (NMS returns indices in sorted order, decreasing w.r.t. scores)
         keep_idx = keep_idx[:max_output]
         return boxes_ltrb[keep_idx], category[keep_idx], scores[keep_idx]
-    

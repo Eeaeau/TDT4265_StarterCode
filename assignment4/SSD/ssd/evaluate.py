@@ -6,6 +6,45 @@ from pycocotools.cocoeval import COCOeval
 from pycocotools.coco import COCO
 from ssd import utils
 from tops import logger
+import sys
+import os
+
+
+def silent_evaluation(eval_object):
+    """Runs coco evaluation without writing to screen
+    """
+    old_stdout = sys.stdout # backup current stdout
+    sys.stdout = open(os.devnull, "w")
+
+    eval_object.evaluate()
+    eval_object.accumulate()
+    eval_object.summarize()
+
+    sys.stdout = old_stdout # reset old stdout
+
+
+def calculate_class_aps(coco_gt, coco_dt, label_map):
+    out_stats = {}
+
+    print("---------------------------------------------------")
+    for index, class_name in label_map.items():
+        eval_object = COCOeval(coco_gt, coco_dt, iouType='bbox')
+        eval_object.params.catIds = [index]
+        silent_evaluation(eval_object)
+
+        ap_score = eval_object.stats[0]  # We should consider changing this to MaP@iou=0.5
+
+        extra_message = ""
+        if ap_score == -1:
+            extra_message = "(No objects of this class in validation set)"
+
+        if ap_score != -1:
+            stat_key = f"AP_{class_name}"
+            out_stats[stat_key] = ap_score
+
+        print("AP for class", class_name, "is", f"{eval_object.stats[0]:.4f}", extra_message)
+
+    return out_stats
 
 
 @torch.no_grad()
@@ -13,7 +52,8 @@ def evaluate(
         model,
         dataloader: torch.utils.data.DataLoader,
         cocoGt: COCO,
-        gpu_transform: torch.nn.Module):
+        gpu_transform: torch.nn.Module,
+        label_map):
     """
         Evaluates over dataloader and returns COCO stats
     """
@@ -36,7 +76,6 @@ def evaluate(
             box_ltwh, category, score = [x.cpu() for x in [box_ltwh, categories, scores]]
             img_id = batch["image_id"][idx].item()
             for b_ltwh, label_, prob_ in zip(box_ltwh, category, score):
-                #TODO! Have to make sure that label_ matches COCO label
                 ret.append([img_id, *b_ltwh.tolist(), prob_.item(),
                             int(label_)])
     model.train()
@@ -46,11 +85,14 @@ def evaluate(
         return dict()
     cocoDt = cocoGt.loadRes(final_results)
     E = COCOeval(cocoGt, cocoDt, iouType='bbox')
+    E.params.areaRng = [[0 ** 2, 1e5 ** 2], [0 ** 2, 16 ** 2], [16 ** 2, 32 ** 2], [32 ** 2, 1e5 ** 2]]
     E.evaluate()
     E.accumulate()
     E.summarize()
-    
-    stats = {
+
+    class_ap_stats = calculate_class_aps(cocoGt, cocoDt, label_map)
+
+    stats_all_objects = {
         "mAP": E.stats[0], # same as mAP@
         "mAP@0.5": E.stats[1], # Same as PASCAL VOC mAP
         "mAP@0.75": E.stats[2],
@@ -64,5 +106,5 @@ def evaluate(
         "average_recall@100_medium": E.stats[10],
         "average_recall@100_large": E.stats[11],
     }
-    return stats
 
+    return dict(stats_all_objects, **class_ap_stats)

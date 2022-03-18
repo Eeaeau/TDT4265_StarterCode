@@ -1,7 +1,7 @@
 import os
 import torch
 import pathlib
-from ..logger import global_step, log
+from ..logger import global_step, log, logger
 from typing import List, Optional
 from argparse import ArgumentError
 
@@ -107,6 +107,7 @@ def save_registered_models(other_state: dict = None, **kwargs):
         assert all(key not in state_dict for key in other_state)
         state_dict.update(other_state)
     save_checkpoint(state_dict, **kwargs)
+    logger._write_metadata()
 
 def load_registered_models(**kwargs):
     assert _models is not None

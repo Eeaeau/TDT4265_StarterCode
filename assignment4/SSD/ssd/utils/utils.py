@@ -46,8 +46,8 @@ def tencent_trick(model):
 
 def load_config(config_path: PathLike):
     config_path = Path(config_path)
-    run_name = "_".join(config_path.parts[1:-1]) + config_path.stem
+    run_name = "_".join(config_path.parts[1:-1]) + "_" + config_path.stem
     cfg = LazyConfig.load(str(config_path))
-    cfg.output_dir = Path(cfg.train._output_dir).joinpath(run_name)
+    cfg.output_dir = Path(cfg.train._output_dir).joinpath(*config_path.parts[1:-1], config_path.stem)
     cfg.run_name = run_name
     return cfg
