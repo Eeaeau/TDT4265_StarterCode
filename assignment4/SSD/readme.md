@@ -55,6 +55,19 @@ This script comes with several extra flags. If you for example want to check the
 python -m performance_assessment.save_comparison_images configs/tdt4265.py --train -n 1000
 ```
 
+### Test on video:
+You can run your code on video with the following script:
+```
+python -m performance_assessment.demo_video configs/tdt4265.py input_path output_path
+```
+Example:
+```
+python3 -m performance_assessment.demo_video configs/tdt4265.py Video00010_combined.avi output.avi
+```
+You can download the validation videos from [OneDrive](https://studntnu-my.sharepoint.com/:f:/g/personal/haakohu_ntnu_no/EhTbLF7OIrZHuUAc2FWAxYoBpFJxfuMoLVxyo519fcSTlw?e=ujXUU7).
+These are the videos that are used in the current TDT4265 validation dataset.
+
+
 
 ## Bencharking the data loader
 The file `benchmark_data_loading.py` will automatically load your training dataset and benchmark how fast it is.
