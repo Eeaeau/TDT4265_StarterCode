@@ -72,8 +72,17 @@ class SoftmaxModel:
             targets.shape == outputs.shape
         ), f"Output shape: {outputs.shape}, targets: {targets.shape}"
         self.grad = np.zeros_like(self.w)
-        assert self.grad.shape == self.w.shape,\
-            f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
+
+        batch_size = X.shape[0]
+
+        self.grad = (
+            -1 / batch_size * np.matmul(X.T, (targets - outputs))
+            + self.l2_reg_lambda * self.w
+        )
+
+        assert (
+            self.grad.shape == self.w.shape
+        ), f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
 
         batch_size = X.shape[0]
 
@@ -119,7 +128,8 @@ def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarra
         Details about this test is given in the appendix in the assignment.
     """
     w_orig = np.random.normal(
-        loc=0, scale=1/model.w.shape[0]**2, size=model.w.shape)
+        loc=0, scale=1 / model.w.shape[0] ** 2, size=model.w.shape
+    )
 
     epsilon = 1e-3
     for i in range(model.w.shape[0]):

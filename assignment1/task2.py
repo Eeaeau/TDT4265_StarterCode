@@ -69,10 +69,8 @@ class LogisticTrainer(BaseTrainer):
         logits = self.model.forward(self.X_val)
         loss = cross_entropy_loss(self.Y_val, logits)
 
-        accuracy_train = calculate_accuracy(
-            self.X_train, self.Y_train, self.model)
-        accuracy_val = calculate_accuracy(
-            self.X_val, self.Y_val, self.model)
+        accuracy_train = calculate_accuracy(X_train, Y_train, self.model)
+        accuracy_val = calculate_accuracy(X_val, Y_val, self.model)
         return loss, accuracy_train, accuracy_val
 
 

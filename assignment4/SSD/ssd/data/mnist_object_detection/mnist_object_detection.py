@@ -103,10 +103,12 @@ def load_dataset(dirpath: pathlib.Path,
                  max_digit_size: int = 100,
                  min_digit_size: int = 15,
                  imsize: int =300,
-                 max_digits_per_image: int = 20):
+                 max_digits_per_image: int = 20
+                 ):
     num_images = 10000 if is_train else 1000
     X_train, Y_train, X_test, Y_test = mnist.load()
     X, Y = X_train, Y_train
+
     if not is_train:
         X, Y = X_test, Y_test
     generate_dataset(

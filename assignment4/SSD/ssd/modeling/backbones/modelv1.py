@@ -14,15 +14,44 @@ class InitLayer(torch.nn.Sequential):
             maxpool_kernel_size=2):
         super().__init__(
             nn.Conv2d(in_channels=num_in_channels, out_channels=32, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
+            nn.Hardswish(inplace=True),
+            nn.BatchNorm2d(32),
             nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
+            
+            # nn.Conv2d(in_channels=32, out_channels=128, kernel_size=kernel_size, stride=stride, padding=padding),
+            # nn.Hardswish(inplace=True),
+            # nn.BatchNorm2d(128),
+            #nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
+
+            # nn.Conv2d(in_channels=128, out_channels=512, kernel_size=kernel_size, padding=padding),
+            # nn.Hardswish(inplace=True),
+            # nn.Dropout(0.2),
+            
+            #nn.BatchNorm2d(512),
+            #nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=1, padding=1),
+            # nn.Conv2d(in_channels=512, out_channels=256, kernel_size=kernel_size, stride=stride, padding=padding),
+            # nn.Hardswish(inplace=True),
+            # nn.Dropout(0.2),
+            
+            #nn.BatchNorm2d(256),
+            # #nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=1, padding=1),
+            # nn.Conv2d(in_channels=128, out_channels=256, kernel_size=kernel_size, stride=stride, padding=padding),
+            # nn.ReLU(),
+            # #nn.Dropout(0.2),
+            # nn.BatchNorm2d(256),
+
+            #nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
+            nn.Conv2d(in_channels=256, out_channels=128, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.Hardswish(inplace=True),
+            nn.Dropout(0.2),
+            nn.BatchNorm2d(128),
             nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
+
+            nn.Conv2d(in_channels=128, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.Hardswish(inplace=True),
+            nn.BatchNorm2d(64),
             nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=2, padding=padding),
-            nn.ReLU(),
+            nn.Hardswish(inplace=True),
         )
 
 #dont quite understand why its a relu output of the init layer and as an input and output in the rest of the layers, removed it as i got an error about size
@@ -38,12 +67,12 @@ class ConvLayer(torch.nn.Sequential):
             ):
         super().__init__(
             nn.Conv2d(in_channels=num_in_channels, out_channels=num_in_channels, kernel_size=kernel_size, stride=stride1, padding=padding1),
-            nn.ReLU(),
+            nn.Hardswish(inplace=True),
             nn.Conv2d(in_channels=num_in_channels, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride2, padding=padding2),
-            nn.ReLU(),
+            nn.SiLU(),
         )
 
-class BasicModel(torch.nn.Module):
+class ModelV1(torch.nn.Module):
     """
     This is a basic backbone for SSD.
     The feature extractor outputs a list of 6 feature maps, with the sizes:
@@ -87,9 +116,10 @@ class BasicModel(torch.nn.Module):
         """
         out_features = []
         for layer in self.model:
+            #print(layer)
             x = layer(x)
             out_features.append(x)
-            
+
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
@@ -99,5 +129,3 @@ class BasicModel(torch.nn.Module):
         assert len(out_features) == len(self.output_feature_shape),\
             f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         return tuple(out_features)
-
-

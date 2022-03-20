@@ -3,7 +3,7 @@ import torch.nn as nn
 from typing import Tuple, List
 
 #As the layers are pretty much the same except for the first layer I think it is nicer to create a class that contains the backbbones of the layers, I have seen other networks created like this(ex mobilenet)
-class InitLayer(torch.nn.Sequential):
+class InitBlock(torch.nn.Sequential):
     def __init__(self,
             num_in_channels,
             num_out_channels,
@@ -14,19 +14,38 @@ class InitLayer(torch.nn.Sequential):
             maxpool_kernel_size=2):
         super().__init__(
             nn.Conv2d(in_channels=num_in_channels, out_channels=32, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
+            nn.BatchNorm2d(32),
+            nn.Hardswish(inplace=True),
             nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
+
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Hardswish(inplace=True),
             nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
+
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.BatchNorm2d(128),
+            nn.Hardswish(inplace=True),
+
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.BatchNorm2d(256),
+            nn.Hardswish(inplace=True),
+
+            nn.Conv2d(in_channels=256, out_channels=128, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.BatchNorm2d(128),
+            nn.Hardswish(inplace=True),
+
+            nn.Conv2d(in_channels=128, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
+            nn.BatchNorm2d(64),
+            nn.Hardswish(inplace=True),
+
             nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=2, padding=padding),
-            nn.ReLU(),
+            nn.BatchNorm2d(128),
+            nn.Hardswish(inplace=True),
         )
 
 #dont quite understand why its a relu output of the init layer and as an input and output in the rest of the layers, removed it as i got an error about size
-class ConvLayer(torch.nn.Sequential):
+class ConvBlock(torch.nn.Sequential):
     def __init__(self,
             num_in_channels,
             num_out_channels,
@@ -38,12 +57,12 @@ class ConvLayer(torch.nn.Sequential):
             ):
         super().__init__(
             nn.Conv2d(in_channels=num_in_channels, out_channels=num_in_channels, kernel_size=kernel_size, stride=stride1, padding=padding1),
-            nn.ReLU(),
+            nn.Hardswish(inplace=True),
             nn.Conv2d(in_channels=num_in_channels, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride2, padding=padding2),
-            nn.ReLU(),
+            nn.SiLU(),
         )
 
-class BasicModel(torch.nn.Module):
+class ModelV2(torch.nn.Module):
     """
     This is a basic backbone for SSD.
     The feature extractor outputs a list of 6 feature maps, with the sizes:
@@ -64,12 +83,13 @@ class BasicModel(torch.nn.Module):
         self.model = nn.ModuleList()
 
         #adding the layers
-        self.model.append(InitLayer(image_channels, output_channels[0]))
-        self.model.append(ConvLayer(output_channels[0], output_channels[1]))
-        self.model.append(ConvLayer(output_channels[1], output_channels[2]))
-        self.model.append(ConvLayer(output_channels[2], output_channels[3]))
-        self.model.append(ConvLayer(output_channels[3], output_channels[4]))
-        self.model.append(ConvLayer(output_channels[4], output_channels[5], stride2=1, padding2=0))
+        self.model.append(InitBlock(image_channels, output_channels[0]))
+        self.model.append(ConvBlock(output_channels[0], output_channels[1]))
+        self.model.append(ConvBlock(output_channels[1], output_channels[2]))
+        self.model.append(ConvBlock(output_channels[2], output_channels[3]))
+        self.model.append(ConvBlock(output_channels[3], output_channels[4]))
+        #self.model.append(ConvBlock(output_channels[4], output_channels[5]))
+        self.model.append(ConvBlock(output_channels[4], output_channels[5], stride2=1, padding2=0))
 
 
     def forward(self, x):
@@ -85,10 +105,21 @@ class BasicModel(torch.nn.Module):
         where out_features[0] should have the shape:
             shape(-1, output_channels[0], 38, 38),
         """
+        residual = 0
         out_features = []
-        for layer in self.model:
-            x = layer(x)
-            out_features.append(x)
+        for idx, layer in enumerate(self.model):
+            if idx % 2 == 0:
+                residual = x
+                print(x.shape)
+                x = layer(x)
+                
+                out_features.append(x)
+            else:
+                
+                x = layer(x)
+                print(x.shape)
+                #x = layer(x+residual)
+                out_features.append(x)
             
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
