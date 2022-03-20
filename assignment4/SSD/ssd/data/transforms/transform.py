@@ -41,17 +41,16 @@ def jaccard_numpy(box_a, box_b):
 
 class RandomSampleCrop(torch.nn.Module):
     """Crop
-    Implementation from: https://github.com/lufficc/SSD
+    Implementation originally from: https://github.com/lufficc/SSD
+
+    NOTE: This function needs to be run before to_tensor
     Arguments:
-        img (Image): the image being input during training
-        boxes (Tensor): the original bounding boxes in pt form
-        labels (Tensor): the class labels for each bbox
-        mode (float tuple): the min and max jaccard overlaps
+        sample dict containing at least the following:
+        img (np.ndarray): the image being input during training
+        boxes (np.ndarray): the original bounding boxes in pt form
+        labels (np.ndarray): the class labels for each bbox
     Return:
-        (img, boxes, classes)
-            img (Image): the cropped image
-            boxes (Tensor): the adjusted bounding boxes in pt form
-            labels (Tensor): the class labels for each bbox
+        the same sample dict with modified img, boxes and labels
     """
 
     def __init__(self):
@@ -76,7 +75,9 @@ class RandomSampleCrop(torch.nn.Module):
         if boxes is not None and boxes.shape[0] == 0:
             return sample
         height, width, _ = image.shape
-        boxes = boxes.clone()
+        original_aspect_ratio = height / width
+
+        boxes = boxes.copy()
         boxes[:, [0, 2]] *= width
         boxes[:, [1, 3]] *= height
         while True:
@@ -99,7 +100,7 @@ class RandomSampleCrop(torch.nn.Module):
                 h = np.random.uniform(0.3 * height, height)
 
                 # aspect ratio constraint b/t .5 & 2
-                if h / w < 0.5 or h / w > 2:
+                if h / w < (original_aspect_ratio / 2) or h / w > (original_aspect_ratio * 2):
                     continue
 
                 left = np.random.uniform(width - w)
@@ -116,8 +117,7 @@ class RandomSampleCrop(torch.nn.Module):
                     continue
 
                 # cut the crop from the image
-                current_image = current_image[:, rect[1]:rect[3], rect[0]:rect[2],
-                                :]
+                current_image = current_image[rect[1]:rect[3], rect[0]:rect[2], :]
 
                 # keep overlap with gt box IF center in sampled patch
                 centers = (boxes[:, :2] + boxes[:, 2:]) / 2.0
@@ -153,7 +153,11 @@ class RandomSampleCrop(torch.nn.Module):
                 current_boxes[:, 2:] -= rect[:2]
                 current_boxes[:, [0, 2]] /= w
                 current_boxes[:, [1, 3]] /= h
-                return dict(image=current_image, boxes=current_boxes, labels=current_labels)
+
+                sample["image"] = current_image
+                sample["boxes"] = current_boxes
+                sample["lables"] = current_labels
+                return sample
 
 
 class RandomHorizontalFlip(torch.nn.Module):
@@ -161,7 +165,7 @@ class RandomHorizontalFlip(torch.nn.Module):
     def __init__(self, p=0.5) -> None:
         super().__init__()
         self.p = p
- 
+
     def __call__(self, sample):
         image = sample["image"]
         if np.random.uniform() < self.p:

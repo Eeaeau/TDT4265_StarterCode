@@ -42,9 +42,7 @@ class SSDMultiboxLoss(nn.Module):
         self.sl1_loss = nn.SmoothL1Loss(reduction='none')
         self.anchors = nn.Parameter(anchors(order="xywh").transpose(0, 1).unsqueeze(dim = 0),
             requires_grad=False)
-        # Two factor are from following links
-        # http://jany.st/post/2017-11-05-single-shot-detector-ssd-from-scratch-in-tensorflow.html
-        self.CEL = nn.CrossEntropyLoss(reduction='none')
+
 
     def _loc_vec(self, loc):
         """
