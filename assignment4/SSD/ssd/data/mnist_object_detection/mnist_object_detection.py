@@ -107,7 +107,6 @@ def load_dataset(dirpath: pathlib.Path,
                  ):
     num_images = 10000 if is_train else 1000
     X_train, Y_train, X_test, Y_test = mnist.load()
-    print(X_train.shape)
     X, Y = X_train, Y_train
 
     if not is_train:
