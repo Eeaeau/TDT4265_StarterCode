@@ -1,3 +1,4 @@
+import pathlib
 import numpy as np
 import torch.utils.data as data
 import os
@@ -47,6 +48,11 @@ class TDT4265Dataset(data.Dataset):
             if len(v[2]) == 0:
                 self.images.pop(k)
         self.img_keys = list(self.images.keys())
+        # Sorts the dataset to iterate over frames in the correct order
+        sort_frame = lambda k: int(str(pathlib.Path(k).stem.split("_")[-1]))
+        sort_video = lambda k: int(str(pathlib.Path(k).stem.split("_")[-2].replace("Video", "")))
+        self.img_keys.sort(key=lambda key: sort_frame(self.images[key][0]))
+        self.img_keys.sort(key=lambda key: sort_video(self.images[key][0]))
         self.transform = transform
 
     def __len__(self):

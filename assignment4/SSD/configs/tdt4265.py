@@ -27,13 +27,13 @@ gpu_transform = L(torchvision.transforms.Compose)(transforms=[
     L(Normalize)(mean=[0.4727, 0.2262, 0.4744], std=[0.2966, 0.2879, 0.2865])
 ])
 data_train.dataset = L(TDT4265Dataset)(
-    img_folder=get_dataset_dir("tdt4265"),
+    img_folder=get_dataset_dir("tdt4265_2022"),
     transform="${train_cpu_transform}",
-    annotation_file=get_dataset_dir("tdt4265/train_annotations.json"))
+    annotation_file=get_dataset_dir("tdt4265_2022/train_annotations.json"))
 data_val.dataset = L(TDT4265Dataset)(
-    img_folder=get_dataset_dir("tdt4265"),
+    img_folder=get_dataset_dir("tdt4265_2022"),
     transform="${val_cpu_transform}",
-    annotation_file=get_dataset_dir("tdt4265/val_annotations.json"))
+    annotation_file=get_dataset_dir("tdt4265_2022/val_annotations.json"))
 data_val.gpu_transform = gpu_transform
 data_train.gpu_transform = gpu_transform
 
