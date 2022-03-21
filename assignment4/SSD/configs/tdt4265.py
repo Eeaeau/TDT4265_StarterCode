@@ -24,7 +24,7 @@ val_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
     L(Resize)(imshape="${train.imshape}"),
 ])
 gpu_transform = L(torchvision.transforms.Compose)(transforms=[
-    L(Normalize)(mean=[0.4727, 0.2262, 0.4744], std=[0.2966, 0.2879, 0.2865])
+    L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878])
 ])
 data_train.dataset = L(TDT4265Dataset)(
     img_folder=get_dataset_dir("tdt4265_2022"),
