@@ -1,8 +1,7 @@
 # Walkthrough of TDT4265 Annotation system
 
 ## Annotation Tutorial
-**We will publish a thorough video describing the annotation process soon.**
-Watch the tutorial before starting the labeling task.
+Watch the tutorial before starting the labeling task. https://youtu.be/V5VuWVAGzwM
 
 ## Annotation Steps:
 
@@ -39,7 +38,7 @@ These are the labels that you are supposed to be annotating:
 * You are unsure what the object is.
 * The object is very small (at your discretion). A general rule of thumb is that whatever a human eye can see, computer must be able to recognize. So if you can make out an object and which class it belongs to in the frame, you must label it.
 * Less than 10-20% of the object is visible, such that you cannot be sure what class it is. e.g. if only a tyre is visible it may belong to car or truck so cannot be labelled car, but feet/faces can only belong to a person
-* All objects that are visible in **any of the LIDAR channels** (that is, objects that are visible in either intensity, range or ambience). The CVAT server only visualizes the LIDAR intensity, but you can take a look at the other channels by looking at the original videos posted [here](https://studntnu-my.sharepoint.com/:f:/g/personal/haakohu_ntnu_no/EnNwXrHCFbRPn9fYNWXaw7MBUvAD4pz1kVs0HpJWe9PfTA?e=qAITlw). 
+* All objects that are visible in **any of the LIDAR channels** (that is, objects that are visible in either intensity, range or ambience). The CVAT server only visualizes the LIDAR intensity, but you can take a look at the other channels by looking at the original videos posted [here](https://studntnu-my.sharepoint.com/:f:/g/personal/haakohu_ntnu_no/EnNwXrHCFbRPn9fYNWXaw7MBUvAD4pz1kVs0HpJWe9PfTA?e=5YIR4p). 
 
 **Bounding Box:**
 * Bounding box should be tight around the object, except where the bounding box would have to be made excessively large to include a few additional pixels (<5%) e.g. a car aerial.

@@ -65,7 +65,7 @@ def create_viz_image(batch, label_map):
 
 
 def create_filepath(save_folder, image_id):
-    filename = "image_" + str(image_id[0].item()) + ".png"
+    filename = "image_" + str(image_id) + ".png"
     return os.path.join(save_folder, filename)
 
 
@@ -81,8 +81,8 @@ def save_images_with_annotations(dataloader, cfg, save_folder, num_images_to_vis
     for i in tqdm(range(num_images_to_save)):
         batch = next(dataloader)
         viz_image = create_viz_image(batch, cfg.label_map)
-        filepath = create_filepath(save_folder, batch["image_id"])
-        cv2.imwrite(filepath, viz_image)
+        filepath = create_filepath(save_folder, i)
+        cv2.imwrite(filepath, viz_image[:, :, ::-1])
 
 
 def main():
