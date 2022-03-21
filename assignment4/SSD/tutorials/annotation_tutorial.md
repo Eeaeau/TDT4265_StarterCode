@@ -1,8 +1,7 @@
 # Walkthrough of TDT4265 Annotation system
 
 ## Annotation Tutorial
-**We will publish a thorough video describing the annotation process soon.**
-Watch the tutorial before starting the labeling task.
+Watch the tutorial before starting the labeling task. https://youtu.be/V5VuWVAGzwM
 
 ## Annotation Steps:
 
