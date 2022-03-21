@@ -26,7 +26,7 @@ class InitLayer(nn.Sequential):
         nn.BatchNorm2d(num_features=64),
         nn.Hardswish(inplace=True),
         
-        nn.Conv2d(in_channels=64, out_channels= num_out_channels, kernel_size=kernel_size, stride=2, padding=padding),
+        nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=2, padding=padding),
         nn.BatchNorm2d(num_features=128),
         nn.Hardswish(inplace=True),
         )
@@ -78,7 +78,7 @@ class ModelV3(torch.nn.Module):
         self.fourth_layer = ConvLayer(output_channels[2], 128, output_channels[3])
         self.fifth_layer = ConvLayer(output_channels[3], 128, output_channels[4])
         self.features.append(self.fifth_layer)
-        self.last_layer = ConvLayer(output_channels[4], 128, output_channels[5], stride_two=1, padding_two=0)
+        self.last_layer = ConvLayer(output_channels[4], 128, output_channels[5], stride2=1, padding2=0)
         self.features.append(self.last_layer)
 
     def forward(self, x):
