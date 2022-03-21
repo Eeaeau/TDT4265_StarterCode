@@ -7,7 +7,7 @@ from tops.config import LazyCall as L
 from ssd.data.transforms import (
     ToTensor, RandomHorizontalFlip, RandomSampleCrop, Normalize, Resize,
     GroundTruthBoxesToAnchors)
-from .ssd300 import train, anchors, optimizer, schedulers, model, data_train, data_val
+from .ssd300 import train, anchors, optimizer, schedulers, model, data_train, data_val, loss_objective
 from .utils import get_dataset_dir
 
 # Keep the model, except change the backbone and number of classes
@@ -19,9 +19,9 @@ schedulers.multistep.milestones = [70000, 9000]
 train.epochs = 40
 
 train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
+    L(RandomSampleCrop)(),
     L(ToTensor)(),
     L(RandomHorizontalFlip)(),
-    L(RandomSampleCrop)(),
     L(Resize)(imshape="${train.imshape}"),
     L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),
 ])

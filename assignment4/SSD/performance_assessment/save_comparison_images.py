@@ -78,7 +78,7 @@ def visualize_model_predictions_on_image(image, img_transform, batch, model, lab
 
 
 def create_filepath(save_folder, image_id):
-    filename = "image_" + str(image_id[0].item()) + ".png"
+    filename = "image_" + str(image_id) + ".png"
     return os.path.join(save_folder, filename)
 
 
@@ -109,8 +109,8 @@ def create_and_save_comparison_images(dataloader, model, cfg, save_folder, score
     for i in tqdm(range(num_images_to_save)):
         batch = next(dataloader)
         comparison_image = create_comparison_image(batch, model, img_transform, cfg.label_map, score_threshold)
-        filepath = create_filepath(save_folder, batch["image_id"])
-        cv2.imwrite(filepath, comparison_image)
+        filepath = create_filepath(save_folder, i)
+        cv2.imwrite(filepath, comparison_image[:, :, ::-1])
 
 
 def get_save_folder_name(cfg, dataset_to_visualize):
