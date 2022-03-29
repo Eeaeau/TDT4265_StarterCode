@@ -94,7 +94,7 @@ def dataset_exists(dirpath: pathlib.Path, num_images):
 
     for image_id in range(num_images):
         label_path = dirpath.joinpath("labels", f"{image_id}.txt")
-        assert label_path.is_file(),  f"{error_msg} {impath} \n\t{error_msg2}"
+        assert label_path.is_file(),  f"{error_msg} {label_path} \n\t{error_msg2}"
     return True
 
 
