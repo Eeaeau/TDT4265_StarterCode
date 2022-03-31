@@ -37,8 +37,8 @@ anchors = L(AnchorBoxes)(
 )
 
 backbone = L(backbones.ModelV3)(
-    #output_channels=[128, 256, 128, 128, 64, 64], #for orig
-    output_channels=[128, 128, 128, 256, 256, 256, 128, 128, 128, 64, 64, 64],
+    output_channels=[128, 256, 128, 128, 64, 64], #for orig
+    #output_channels=[128, 128, 128, 256, 256, 256, 128, 128, 128, 64, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
 )
