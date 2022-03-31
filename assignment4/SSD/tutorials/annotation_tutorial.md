@@ -37,7 +37,7 @@ These are the labels that you are supposed to be annotating:
 **ALL objects** of the defined categories, **unless**:
 * You are unsure what the object is.
 * The object is very small (at your discretion). A general rule of thumb is that whatever a human eye can see, computer must be able to recognize. So if you can make out an object and which class it belongs to in the frame, you must label it.
-* Less than 10-20% of the object is visible, such that you cannot be sure what class it is. e.g. if only a tyre is visible it may belong to car or truck so cannot be labelled car, but feet/faces can only belong to a person
+* Less than 50% of the object is visible, such that you cannot be sure what class it is. e.g. if only a tyre is visible it may belong to car or truck so cannot be labelled car, but feet/faces can only belong to a person
 * All objects that are visible in **any of the LIDAR channels** (that is, objects that are visible in either intensity, range or ambience). The CVAT server only visualizes the LIDAR intensity, but you can take a look at the other channels by looking at the original videos posted [here](https://studntnu-my.sharepoint.com/:f:/g/personal/haakohu_ntnu_no/EnNwXrHCFbRPn9fYNWXaw7MBUvAD4pz1kVs0HpJWe9PfTA?e=5YIR4p). 
 
 **Bounding Box:**

@@ -6,6 +6,9 @@ def get_dataset_dir(dataset_relpath: str):
     if server_dir.is_dir():
         print("Found dataset directory in:", server_dir)
         return str(server_dir)
+    if server_dir.is_file():
+        print("Found dataset file in:", server_dir)
+        return str(server_dir)
     return str(pathlib.Path("data", dataset_relpath))
 
 def get_output_dir():
