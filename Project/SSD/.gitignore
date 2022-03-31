@@ -1,0 +1,24 @@
+# Images / Videos
+*.png
+*.jpg
+*.jpeg
+*.m4a
+*.mkv
+*.mp4
+
+# Directories
+.cache/
+logs/
+
+.vscode
+__pycache__
+**/.ipynb_checkpoints/**
+
+# datasets
+data/coco/
+data/mnist_object_detection
+data/original_mnist
+outputs/
+data/VOCdevkit
+notebooks/data
+data/tdt4265_2022
