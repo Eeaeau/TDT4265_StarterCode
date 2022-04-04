@@ -156,7 +156,7 @@ class RandomSampleCrop(torch.nn.Module):
 
                 sample["image"] = current_image
                 sample["boxes"] = current_boxes
-                sample["lables"] = current_labels
+                sample["labels"] = current_labels
                 return sample
 
 
