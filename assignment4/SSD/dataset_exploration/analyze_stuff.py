@@ -27,6 +27,12 @@ def analyze_something(dataloader, cfg):
         print("The keys in the batch are:", batch.keys())
         exit()
 
+def analyze_batch(dataloader, cfg):
+    for batch in tqdm(dataloader):
+        # Remove the two lines below and start analyzing :D
+        print("The keys in the batch are:", batch)
+        exit()
+
 
 def main():
     config_path = "configs/tdt4265.py"
@@ -36,7 +42,7 @@ def main():
     print("Label map is:", cfg.label_map)
 
     dataloader = get_dataloader(cfg, dataset_to_analyze)
-    analyze_something(dataloader, cfg)
+    analyze_batch(dataloader, cfg)
 
 
 if __name__ == '__main__':
