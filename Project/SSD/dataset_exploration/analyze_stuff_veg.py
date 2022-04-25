@@ -1,3 +1,4 @@
+from audioop import mul
 from operator import index
 from matplotlib import collections
 from tops.config import instantiate, LazyConfig
@@ -133,6 +134,43 @@ def calcSides(arr):
     y = arr[3]-arr[1]
     return x.item(),y.item()
 
+
+
+def numOverlapped(dataloader_train,dataloader_val):
+    num_overlapped_per_frame_train = []
+    num_overlapped_per_frame_val = []
+    for idx_t, batch_t in enumerate(tqdm(dataloader_train)):
+        overlapped = 0
+        
+        for i_t, box_t in enumerate(batch_t['boxes'].squeeze().numpy()):
+            
+            for idx, x in enumerate(batch_t['boxes'].squeeze().numpy()):
+                if idx == i_t:
+                    continue
+                elif not (box_t[0]>=x[2]) or (box_t[2]<=x[0]) or (box_t[3]<=x[1]) or (box_t[1]>=x[3]):
+                    overlapped += 1
+        num_overlapped_per_frame_train.append(overlapped)
+    
+
+
+
+
+    for idx_v, batch_v in enumerate(tqdm(dataloader_val)):
+        overlapped = 0
+        
+        for i_v, box_v in enumerate(batch_v['boxes'].squeeze().numpy()):
+            
+            for idxv, x_v in enumerate(batch_v['boxes'].squeeze().numpy()):
+                if idxv == i_v:
+                    continue
+                elif not (box_t[0]>=x_v[2]) or (box_v[2]<=x_v[0]) or (box_v[3]<=x_v[1]) or (box_v[1]>=x_v[3]):
+                    overlapped += 1
+        num_overlapped_per_frame_val.append(overlapped)
+    
+    return num_overlapped_per_frame_train, num_overlapped_per_frame_val
+            
+
+
 def boxSizes(dataloader, save_fig=False):
     box_sizes = []
     for batch in tqdm(dataloader):
@@ -155,7 +193,7 @@ def boxSizes(dataloader, save_fig=False):
 
 def createDataframe(dataloader_train, dataloader_val, labels):
     #df = pd.DataFrame(columns=['dataset','width', 'height', 'type', 'frame_num'])
-    data_dict = {'dataset':[],'width':[], 'height':[], 'type':[], 'frame_num':[]}
+    data_dict = {'dataset':[],'width':[], 'height':[], 'type':[], 'frame_num':[], 'box_point':[]}
     for idx_t, batch_t in enumerate(tqdm(dataloader_train)):
         for i_t, box_t in enumerate(batch_t['boxes'].squeeze()):
             w, h = calcSides(box_t)
@@ -164,6 +202,7 @@ def createDataframe(dataloader_train, dataloader_val, labels):
             data_dict['type'].append(labels[batch_t['labels'][0][i_t]])
             data_dict['frame_num'].append(idx_t)
             data_dict['dataset'].append('train')
+            data_dict['box_point'].append((box_t.numpy()))
 
     for idx_v, batch_v in enumerate(tqdm(dataloader_val)):
         for i_v, box_v in enumerate(batch_v['boxes'].squeeze()):
@@ -173,7 +212,7 @@ def createDataframe(dataloader_train, dataloader_val, labels):
             data_dict['type'].append(labels[batch_v['labels'][0][i_v]])
             data_dict['frame_num'].append(idx_v)
             data_dict['dataset'].append('val')
-    
+            data_dict['box_point'].append((box_v.numpy()))
     df = pd.DataFrame.from_dict(data_dict)
     
     return df
@@ -225,7 +264,7 @@ def widthHight(dataloader):
 def classPlot(df, cls=None):
     df_nf = df.drop(['frame_num'], axis=1)
     if cls:
-        sns.countplot(df_nf[df_nf['type']==cls])
+        sns.displot(df_nf[df_nf['type']==cls])
     else:
         sns.displot(df_nf['type'])
     plt.show()
@@ -236,8 +275,9 @@ def analyze_something(dataloader, cfg):
         # Remove the two lines below and start analyzing :D
         #print(len(batch['labels'].tolist()[0]))
         #count_labels += batch['labels'].tolist()[0]
-    
-        print(batch)
+        for i_t, box_t in enumerate(batch['boxes'].squeeze().numpy()):
+
+            print(batch)
 
             print(batch)
 
@@ -272,7 +312,22 @@ def main():
     #w_t, h_t = widthHight(dataloader_train)
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
-    df = createDataframe(dataloader_train, dataloader_val, labels)
-    classPlot(df, 'person')
+    t, v = numOverlapped(dataloader_train, dataloader_val)
+    print(t)
+    print(v)
+    #df = createDataframe(dataloader_train, dataloader_val, labels)
+    #print(df.head())
+    #print(df.describe())
+    #df = df[df['dataset']=='train']
+    #df['area'] = df['width']*df['height']
+    #sns.histplot(x='height', data=df, hue='type',alpha=1)
+    #sns.displot(data=df, x='area', hue='type',row='dataset',kde=True)
+    #sns.displot(data=df, x='height', row='type' alpha=1)
+    #plt.savefig('./dataset_exploration/area_both_dist_kde.png', dpi=200)
+    #plt.savefig('./dataset_exploration/area_both_dist_kde.eps', dpi=200)
+    #plt.xlim(0,0.03)
+    #plt.ylim(0,0.8)
+    #plt.show()
+    #classPlot(df, 'person')
 if __name__ == '__main__':
     main()
