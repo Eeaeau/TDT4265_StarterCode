@@ -54,7 +54,7 @@ class AnchorEncoder(object):
             Encode ground truth boxes and targets to anchors.
             Each ground truth is assigned to at least 1 anchor and
             each anchor is assigned to every ground truth if IoU threshold is met.
-            
+
             Args:
                 bboxes_in (num_targets, 4): ground truth boxes.
                 labels_in (num_targets): labels of targets.
@@ -77,7 +77,7 @@ class AnchorEncoder(object):
         # filter IoU > 0.5
         masks = best_target_per_anchor > iou_threshold
         labels_out = torch.zeros(self.nboxes, dtype=torch.long)
-        labels_out[masks] = labels_in[best_target_per_anchor_idx[masks]]
+        labels_out[masks] = labels_in[best_target_per_anchor_idx[masks]].long()
         bboxes_out = self.anchors.clone()
         bboxes_out[masks, :] = bboxes_in[best_target_per_anchor_idx[masks], :]
         # Transform format to xywh format

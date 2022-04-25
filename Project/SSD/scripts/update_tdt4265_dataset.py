@@ -40,7 +40,7 @@ if __name__ == "__main__":
     download_old = args.old
     if download_old:
         zip_url = "https://folk.ntnu.no/haakohu/tdt4265_2022_dataset.zip"
-        dataset_path = pathlib.Path("data", "tdt4265_2022_updated")
+        dataset_path = pathlib.Path("data", "tdt4265_2022")
         zip_path = pathlib.Path("data", "tdt4265", "dataset.zip")
     else:
         zip_url = "https://folk.ntnu.no/haakohu/tdt4265_2022_dataset_updated.zip"
