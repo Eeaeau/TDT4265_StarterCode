@@ -1,47 +1,6 @@
 import torch
-import torch.nn as nn
 from typing import Tuple, List
 
-#As the layers are pretty much the same except for the first layer I think it is nicer to create a class that contains the backbbones of the layers, I have seen other networks created like this(ex mobilenet)
-class InitLayer(torch.nn.Sequential):
-    def __init__(self,
-            num_in_channels,
-            num_out_channels,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            max_pool_stride=2,
-            maxpool_kernel_size=2):
-        super().__init__(
-            nn.Conv2d(in_channels=num_in_channels, out_channels=32, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=maxpool_kernel_size, stride=max_pool_stride),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_size, stride=stride, padding=padding),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=num_out_channels, kernel_size=kernel_size, stride=2, padding=padding),
-            nn.ReLU(),
-        )
-
-#dont quite understand why its a relu output of the init layer and as an input and output in the rest of the layers, removed it as i got an error about size
-class ConvLayer(torch.nn.Sequential):
-    def __init__(self,
-            num_in_channels,
-            num_out_channels,
-            kernel_size=3,
-            stride1=1,
-            stride2=2,
-            padding1=1,
-            padding2=1
-            ):
-        super().__init__(
-            nn.Conv2d(in_channels=num_in_channels, out_channels=num_in_channels, kernel_size=kernel_size, stride=stride1, padding=padding1),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=num_in_channels, out_channels=num_out_channels, kernel_size=kernel_size, stride=stride2, padding=padding2),
-            nn.ReLU(),
-        )
 
 class BasicModel(torch.nn.Module):
     """
@@ -61,16 +20,51 @@ class BasicModel(torch.nn.Module):
         super().__init__()
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
-        self.model = nn.ModuleList()
-
-        #adding the layers
-        self.model.append(InitLayer(image_channels, output_channels[0]))
-        self.model.append(ConvLayer(output_channels[0], output_channels[1]))
-        self.model.append(ConvLayer(output_channels[1], output_channels[2]))
-        self.model.append(ConvLayer(output_channels[2], output_channels[3]))
-        self.model.append(ConvLayer(output_channels[3], output_channels[4]))
-        self.model.append(ConvLayer(output_channels[4], output_channels[5], stride2=1, padding2=0))
-
+        self.feature_extractor = torch.nn.Sequential(#sol
+            torch.nn.Conv2d(image_channels, 32, kernel_size=3, padding=1),#sol
+            torch.nn.ReLU(),#sol
+            torch.nn.MaxPool2d(2,2), # 150x150 out#sol
+            torch.nn.Conv2d(32, 64, kernel_size=3, padding=1),#sol
+            torch.nn.ReLU(),#sol
+            torch.nn.MaxPool2d(2,2), # 75 x 75 out#sol
+            torch.nn.Conv2d(64, 64, kernel_size=3, padding=1),#sol
+            torch.nn.ReLU(),#sol
+            # Use ceil mode to get 75/2 to ouput 38#sol
+            torch.nn.Conv2d(64, output_channels[0], kernel_size=3, padding=1, stride=2),#sol
+            torch.nn.ReLU(),#sol
+        ) #sol
+        self.additional_layers = torch.nn.ModuleList([#sol
+            torch.nn.Sequential( # 19 x 19 out#sol
+                torch.nn.Conv2d(output_channels[0], 128, kernel_size=3, padding=1),#sol
+                torch.nn.ReLU(),#sol
+                torch.nn.Conv2d(128, output_channels[1], kernel_size=3, padding=1, stride=2),#sol
+                torch.nn.ReLU(),#sol
+            ),#sol
+            torch.nn.Sequential( # 10x10 out#sol
+                torch.nn.Conv2d(output_channels[1], 256, kernel_size=3, padding=1),#sol
+                torch.nn.ReLU(),#sol
+                torch.nn.Conv2d(256, output_channels[2], kernel_size=3, padding=1, stride=2),#sol
+                torch.nn.ReLU(),#sol
+            ),#sol
+            torch.nn.Sequential( # 5 x 5 out#sol
+                torch.nn.Conv2d(output_channels[2], 128, kernel_size=3, padding=1),#sol
+                torch.nn.ReLU(),#sol
+                torch.nn.Conv2d(128, output_channels[3], kernel_size=3, padding=1, stride=2),#sol
+                torch.nn.ReLU(),#sol
+            ),#sol
+            torch.nn.Sequential( # 3 x 3 out#sol
+                torch.nn.Conv2d(output_channels[3], 128, kernel_size=3, padding=1),#sol
+                torch.nn.ReLU(),#sol
+                torch.nn.Conv2d(128, output_channels[4], kernel_size=3, stride=2, padding=1),#sol
+                torch.nn.ReLU(),#sol
+            ),#sol
+            torch.nn.Sequential( # 1 x 1 out#sol
+                torch.nn.Conv2d(output_channels[4], 128, kernel_size=3, padding=1),#sol
+                torch.nn.ReLU(),#sol
+                torch.nn.Conv2d(128, output_channels[5], kernel_size=3),#sol
+                torch.nn.ReLU(),#sol
+            ),#sol
+        ])#sol
 
     def forward(self, x):
         """
@@ -86,10 +80,11 @@ class BasicModel(torch.nn.Module):
             shape(-1, output_channels[0], 38, 38),
         """
         out_features = []
-        for layer in self.model:
-            x = layer(x)
-            out_features.append(x)
-            
+        x = self.feature_extractor(x)#sol
+        out_features.append(x)#sol
+        for additional_layer in self.additional_layers.children():#sol
+            x = additional_layer(x)#sol
+            out_features.append(x)#sol
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
@@ -100,4 +95,79 @@ class BasicModel(torch.nn.Module):
             f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         return tuple(out_features)
 
-
+class BasicModelExtended(BasicModel): #sol
+#sol
+    def __init__(self, #sol
+            output_channels: List[int], #sol
+            image_channels: int, #sol
+            output_feature_sizes: List[Tuple[int]]):#sol
+        super().__init__(output_channels, image_channels, output_feature_sizes)#sol
+        self.output_channels = output_channels#sol
+        self.feature_extractor = torch.nn.Sequential(#sol
+            torch.nn.Conv2d(image_channels, 32, kernel_size=3, padding=1),#sol
+            torch.nn.BatchNorm2d(32),#sol
+            torch.nn.LeakyReLU(0.2),#sol
+            torch.nn.Conv2d(32, 64, kernel_size=3, padding=1),#sol
+            torch.nn.BatchNorm2d(64),#sol
+            torch.nn.LeakyReLU(0.2),#sol
+            #sol
+            torch.nn.MaxPool2d(2,2), # 150x150 out#sol
+            torch.nn.Conv2d(64, 128, kernel_size=3, padding=1),#sol
+            torch.nn.BatchNorm2d(128),#sol
+            torch.nn.LeakyReLU(0.2),#sol
+            torch.nn.Conv2d(128, 128, kernel_size=3, padding=1),#sol
+            torch.nn.BatchNorm2d(128),#sol
+            torch.nn.LeakyReLU(0.2),#sol
+            torch.nn.MaxPool2d(2,2), # 75 x 75 out#sol
+            torch.nn.Conv2d(128, 256, kernel_size=3, padding=1),#sol
+            torch.nn.BatchNorm2d(256),#sol
+            torch.nn.LeakyReLU(0.2),#sol
+            torch.nn.Conv2d(256, 512, kernel_size=3, padding=1),#sol
+            torch.nn.BatchNorm2d(512),#sol
+            torch.nn.LeakyReLU(0.2),#sol
+            # Use ceil mode to get 75/2 to ouput 38#sol
+            torch.nn.Conv2d(512, output_channels[0], kernel_size=3, padding=1, stride=2),#sol
+        )#sol
+        self.additional_layers = torch.nn.ModuleList([#sol
+            torch.nn.Sequential( # 19 x 19 out#sol
+                torch.nn.BatchNorm2d(output_channels[0]),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(output_channels[0], 512, kernel_size=3, padding=1),#sol
+                torch.nn.BatchNorm2d(512),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(512, output_channels[1], kernel_size=3, padding=1, stride=2),#sol
+            ),#sol
+            torch.nn.Sequential( # 10x10 out#sol
+                torch.nn.BatchNorm2d(output_channels[1]),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(output_channels[1], 256, kernel_size=3, padding=1),#sol
+                torch.nn.BatchNorm2d(256),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(256, output_channels[2], kernel_size=3, padding=1, stride=2),#sol
+            ),#sol
+            torch.nn.Sequential( # 5 x 5 out#sol
+                torch.nn.BatchNorm2d(output_channels[2]),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(output_channels[2], 128, kernel_size=3, padding=1),#sol
+                torch.nn.BatchNorm2d(128),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(128, output_channels[3], kernel_size=3, padding=1, stride=2),#sol
+            ),#sol
+            torch.nn.Sequential( # 3 x 3 out#sol
+                torch.nn.BatchNorm2d(output_channels[3]),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(output_channels[3], 128, kernel_size=3, padding=1),#sol
+                torch.nn.BatchNorm2d(128),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(128, output_channels[4], kernel_size=3, stride=2, padding=1),#sol
+            ),#sol
+            torch.nn.Sequential( # 1 x 1 out#sol
+                torch.nn.BatchNorm2d(output_channels[4]),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(output_channels[4], 128, kernel_size=3, padding=1),#sol
+                torch.nn.BatchNorm2d(128),#sol
+                torch.nn.LeakyReLU(0.2),#sol
+                torch.nn.Conv2d(128, output_channels[5], kernel_size=3),#sol
+            ),#sol
+        ])#sol
+#sol

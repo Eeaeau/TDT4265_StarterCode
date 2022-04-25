@@ -83,4 +83,5 @@ Run the file:
 python save_validation_results.py configs/tdt4265.py results.json
 ```
 Remember to change the configuration file to the correct config.
-The script will save a .json file to the second argument (results.json in this case), which you can upload to the leaderboard server.
+The script will save a .json file to the second argument (results.json in this case), which you can upload to the [leaderboard server](https://tdt4265-annotering.idi.ntnu.no/submissions/).
+
