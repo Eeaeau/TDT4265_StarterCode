@@ -26,7 +26,7 @@ class BasicModel(torch.nn.Module):
             torch.nn.MaxPool2d(2,2), # 150x150 out#sol
             torch.nn.Conv2d(32, 64, kernel_size=3, padding=1),#sol
             torch.nn.ReLU(),#sol
-            torch.nn.MaxPool2d(2,2), # 75 x 75 out#sol
+            #torch.nn.MaxPool2d(2,2), # 75 x 75 out#sol
             torch.nn.Conv2d(64, 64, kernel_size=3, padding=1),#sol
             torch.nn.ReLU(),#sol
             # Use ceil mode to get 75/2 to ouput 38#sol
@@ -59,9 +59,9 @@ class BasicModel(torch.nn.Module):
                 torch.nn.ReLU(),#sol
             ),#sol
             torch.nn.Sequential( # 1 x 1 out#sol
-                torch.nn.Conv2d(output_channels[4], 128, kernel_size=3, padding=1),#sol
+                torch.nn.Conv2d(output_channels[4], 128, kernel_size=2, padding=1,stride=2),#sol
                 torch.nn.ReLU(),#sol
-                torch.nn.Conv2d(128, output_channels[5], kernel_size=3),#sol
+                torch.nn.Conv2d(128, output_channels[5], kernel_size=2,stride=1, padding=0),#sol
                 torch.nn.ReLU(),#sol
             ),#sol
         ])#sol

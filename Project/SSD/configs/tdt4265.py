@@ -7,11 +7,18 @@ from ssd.data.transforms import (
     GroundTruthBoxesToAnchors)
 from .ssd300 import train, anchors, optimizer, schedulers, backbone, model, data_train, data_val, loss_objective
 from .utils import get_dataset_dir
+from ssd.modeling import SSD300, SSDMultiboxLoss, backbones, AnchorBoxes
 
 # Keep the model, except change the backbone and number of classes
 train.imshape = (128, 1024)
 train.image_channels = 3
 model.num_classes = 8 + 1  # Add 1 for background class
+anchors.feature_sizes=[[32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]]
+anchors.strides= [[4, 4], [8, 8], [16, 16], [32, 32], [64, 64], [128, 128]]
+anchors.min_sizes= [[16, 16], [32, 32], [48, 48], [64, 64], [86, 86], [128, 128], [128, 400]]
+anchors.aspect_ratios=[[2, 3], [2, 3], [2, 3], [2, 3], [2], [2]]
+anchors.image_shape="${train.imshape}"
+
 
 
 train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
