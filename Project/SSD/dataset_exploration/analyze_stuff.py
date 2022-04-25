@@ -22,8 +22,14 @@ def get_dataloader(cfg, dataset_to_visualize):
 
 
 def analyze_something(dataloader, cfg):
+    count_labels = []
     for batch in tqdm(dataloader):
         # Remove the two lines below and start analyzing :D
+        #print(len(batch['labels'].tolist()[0]))
+        #count_labels += batch['labels'].tolist()[0]
+    
+        
+
         print("The keys in the batch are:", batch.keys())
         exit()
 

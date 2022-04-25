@@ -1,7 +1,6 @@
 import cv2
 import os
 import numpy as np
-
 from tops.config import instantiate, LazyConfig
 from vizer.draw import draw_boxes
 from ssd import utils

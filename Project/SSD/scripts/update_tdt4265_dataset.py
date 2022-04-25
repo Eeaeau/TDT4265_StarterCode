@@ -2,13 +2,11 @@ import pathlib
 import requests
 import zipfile
 import tqdm
+import argparse
 
 
-zip_url = "https://folk.ntnu.no/haakohu/tdt4265_2022_dataset.zip"
-dataset_path = pathlib.Path("data", "tdt4265_2022")
 
-
-def download_image_zip(zip_path):
+def download_image_zip(zip_path, zip_url):
     response = requests.get(zip_url, stream=True)
     total_length = int(response.headers.get("content-length"))
     assert response.status_code == 200, \
@@ -21,23 +19,34 @@ def download_image_zip(zip_path):
             fp.write(data)
 
 
-def download_dataset():
+def download_dataset(zip_path, dataset_path, zip_url):
     print("Extracting images.")
     work_dir = pathlib.Path("/work", "datasets", "tdt4265_2022")
     if work_dir.is_dir():
         print("You are working on a computer with the dataset under work_dataset:", work_dir)
         print("Doing nothing.")
         return
-    zip_path = pathlib.Path("datasets", "tdt4265", "dataset.zip")
     if not zip_path.is_file():
         print(f"Download the zip file and place it in the path: {zip_path.absolute()}")
-        download_image_zip(zip_path)
+        download_image_zip(zip_path, zip_url)
     with zipfile.ZipFile(zip_path, "r") as fp:
         fp.extractall(dataset_path)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--old", default=False, action="store_true", help="Download the old dataset")
+    args = parser.parse_args()
+    download_old = args.old
+    if download_old:
+        zip_url = "https://folk.ntnu.no/haakohu/tdt4265_2022_dataset.zip"
+        dataset_path = pathlib.Path("data", "tdt4265_2022_updated")
+        zip_path = pathlib.Path("data", "tdt4265", "dataset.zip")
+    else:
+        zip_url = "https://folk.ntnu.no/haakohu/tdt4265_2022_dataset_updated.zip"
+        dataset_path = pathlib.Path("data", "tdt4265_2022_updated")
+        zip_path = pathlib.Path("data", "tdt4265_updated", "dataset.zip")
     # Download labels
     dataset_path.mkdir(exist_ok=True, parents=True)
-    download_dataset()
+    download_dataset(zip_path, dataset_path, zip_url)
     print("Dataset extracted to:", dataset_path)
