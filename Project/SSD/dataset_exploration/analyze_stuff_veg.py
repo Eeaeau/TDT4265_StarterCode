@@ -136,23 +136,36 @@ def calcSides(arr):
 
 
 
-def numOverlapped(dataloader_train,dataloader_val):
+def numOverlapped(dataloader_train,dataloader_val,cfg,viz=False):
     num_overlapped_per_frame_train = []
     num_overlapped_per_frame_val = []
     for idx_t, batch_t in enumerate(tqdm(dataloader_train)):
         overlapped = 0
-        
+        if viz:
+            viz_image = create_viz_image(batch_t, cfg.label_map)
+            #filepath = create_filepath('./dataset_exploration/','test_overlap' )
+            cv2.imshow('window',viz_image[:, :, ::-1])
+            # Waits for a keystroke
+
+            cv2.waitKey(0) 
+
+            cv2.destroyWindow("window")
+
         for i_t, box_t in enumerate(batch_t['boxes'].squeeze().numpy()):
             
             for idx, x in enumerate(batch_t['boxes'].squeeze().numpy()):
                 if idx == i_t:
-                    continue
-                elif not (box_t[0]>=x[2]) or (box_t[2]<=x[0]) or (box_t[3]<=x[1]) or (box_t[1]>=x[3]):
+                    pass
+                x1 = max(x[0],box_t[0]) #left
+                x2 = min(x[2],box_t[2]) #right
+                y1 = max(x[1],box_t[1]) #bot
+                y2 = min(x[3],box_t[3]) #top
+
+                if not (x1 > x2 or y1 > y2): #just checking that it exist an overlap
                     overlapped += 1
         num_overlapped_per_frame_train.append(overlapped)
-    
 
-
+        
 
 
     for idx_v, batch_v in enumerate(tqdm(dataloader_val)):
@@ -162,8 +175,13 @@ def numOverlapped(dataloader_train,dataloader_val):
             
             for idxv, x_v in enumerate(batch_v['boxes'].squeeze().numpy()):
                 if idxv == i_v:
-                    continue
-                elif not (box_t[0]>=x_v[2]) or (box_v[2]<=x_v[0]) or (box_v[3]<=x_v[1]) or (box_v[1]>=x_v[3]):
+                    pass
+                x1v = max(x_v[0],box_v[0]) #left
+                x2v = min(x_v[2],box_v[2]) #right
+                y1v = max(x_v[1],box_v[1]) #bot
+                y2v = min(x_v[3],box_v[3]) #top
+
+                if not (x1v > x2v or y1v > y2v): #just checking that it exist an overlap
                     overlapped += 1
         num_overlapped_per_frame_val.append(overlapped)
     
@@ -292,6 +310,27 @@ def omegaDictTolist(cfg_label_map): #mb getLabels
        labels.append(cfg_label_map[i])
     return labels
 
+
+def plotOverlapPerFrame(dataloader_train, dataloader_val, cfg, show_fig=False):
+    t, v = numOverlapped(dataloader_train, dataloader_val,cfg)
+    df_t = pd.DataFrame.from_dict({'values':t, 'frames':np.arange(len(t))})
+    df_v = pd.DataFrame.from_dict({'values':v, 'frames':np.arange(len(v))})
+    fig, axes = plt.subplots(2, 1)
+    
+    fig.suptitle('Number of overlapping boxes in train and val dataset')
+    sns.lineplot(x='frames', y='values', data=df_t, ax=axes[0], ci='sd',estimator='median',err_style="band")
+    #axes[0].hist(t, bins=len(t))
+    axes[0].set_xlabel('Frame number')
+    axes[0].set_title('Train')
+    sns.lineplot(x='frames', y='values', data=df_v, ax=axes[1], ci='sd',estimator='median',err_style="band")
+    axes[1].set_xlabel('Frame number')
+    axes[1].set_title('Val')
+    plt.tight_layout()
+    if show_fig:
+        plt.show()
+    else:
+        plt.savefig('./dataset_exploration/overlap_per_frame.png', dpi=200)
+        plt.savefig('./dataset_exploration/overlap_per_frame.eps', dpi=200)
 def main():
     config_path = "configs/tdt4265_updated_res34.py"
     cfg = get_config(config_path)
@@ -312,9 +351,7 @@ def main():
     #w_t, h_t = widthHight(dataloader_train)
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
-    t, v = numOverlapped(dataloader_train, dataloader_val)
-    print(t)
-    print(v)
+    plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
     #df = createDataframe(dataloader_train, dataloader_val, labels)
     #print(df.head())
     #print(df.describe())
