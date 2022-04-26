@@ -1,6 +1,7 @@
 from audioop import mul
 from operator import index
 from matplotlib import collections
+from sympy import Point, true
 from tops.config import instantiate, LazyConfig
 from ssd import utils
 from tqdm import tqdm
@@ -211,7 +212,7 @@ def boxSizes(dataloader, save_fig=False):
 
 def createDataframe(dataloader_train, dataloader_val, labels):
     #df = pd.DataFrame(columns=['dataset','width', 'height', 'type', 'frame_num'])
-    data_dict = {'dataset':[],'width':[], 'height':[], 'type':[], 'frame_num':[], 'box_point':[]}
+    data_dict = {'dataset':[],'width':[], 'height':[], 'type':[], 'frame_num':[], 'box_point':[], 'center_x':[],'center_y':[]}
     for idx_t, batch_t in enumerate(tqdm(dataloader_train)):
         for i_t, box_t in enumerate(batch_t['boxes'].squeeze()):
             w, h = calcSides(box_t)
@@ -221,6 +222,9 @@ def createDataframe(dataloader_train, dataloader_val, labels):
             data_dict['frame_num'].append(idx_t)
             data_dict['dataset'].append('train')
             data_dict['box_point'].append((box_t.numpy()))
+            x,y = findCenter(box_t.numpy())
+            data_dict['center_x'].append(x)
+            data_dict['center_y'].append(y)
 
     for idx_v, batch_v in enumerate(tqdm(dataloader_val)):
         for i_v, box_v in enumerate(batch_v['boxes'].squeeze()):
@@ -231,6 +235,9 @@ def createDataframe(dataloader_train, dataloader_val, labels):
             data_dict['frame_num'].append(idx_v)
             data_dict['dataset'].append('val')
             data_dict['box_point'].append((box_v.numpy()))
+            x,y = findCenter(box_v.numpy())
+            data_dict['center_x'].append(x)
+            data_dict['center_y'].append(y)
     df = pd.DataFrame.from_dict(data_dict)
     
     return df
@@ -310,6 +317,43 @@ def omegaDictTolist(cfg_label_map): #mb getLabels
        labels.append(cfg_label_map[i])
     return labels
 
+def findCenter(arr):
+    dis_x = arr[2]-arr[0]
+    dis_y = arr[3]-arr[1]
+    center_x = arr[0] + dis_x/2
+    center_y = arr[1] + dis_y/2
+    return center_x, center_y
+
+
+def plotCenters(df, show_fig=False):
+    #sns.relplot(x='center_x',y='center_y',data=df, row='dataset')
+    fig, axes = plt.subplots(2, 1)
+    fig.suptitle('Position of the center of bounding boxes in a normalized image')
+    sns.scatterplot(x='center_x', y='center_y', data=df[df['dataset']=='train'], ax=axes[0], color='blue')
+    #axes[0].hist(t, bins=len(t))
+    axes[0].set_title('Train')
+    sns.scatterplot(x='center_x', y='center_y', data=df[df['dataset']=='val'], ax=axes[1],color='orange')
+    axes[1].set_title('Val')
+    plt.tight_layout()
+    plt.show()
+    #plt.title('Position of the center of bounding boxes in a normalized image')
+    if show_fig:
+        plt.show()
+        
+    else:
+        plt.savefig('./dataset_exploration/position_ofBox_frame_sub.png', dpi=200)
+        plt.savefig('./dataset_exploration/position_ofBox_frame_sub.eps', dpi=200)
+    
+def aspectRatioPlot(df, show_fig=False):
+    
+    sns.displot(x=df['height']/df['width'],data=df, hue='dataset',stat='frequency',kde=True)
+    plt.title('Frequency of aspect ratio')
+    plt.tight_layout()
+    if show_fig:
+        plt.show()
+    else:
+        plt.savefig('./dataset_exploration/aspectRatio_kde.png', dpi=200)
+        plt.savefig('./dataset_exploration/aspectRatio_kde.eps', dpi=200)
 
 def plotOverlapPerFrame(dataloader_train, dataloader_val, cfg, show_fig=False):
     t, v = numOverlapped(dataloader_train, dataloader_val,cfg)
@@ -351,8 +395,11 @@ def main():
     #w_t, h_t = widthHight(dataloader_train)
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
-    plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
-    #df = createDataframe(dataloader_train, dataloader_val, labels)
+    #plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
+    
+    df = createDataframe(dataloader_train, dataloader_val, labels)
+    #plotCenters(df)
+    aspectRatioPlot(df)
     #print(df.head())
     #print(df.describe())
     #df = df[df['dataset']=='train']
