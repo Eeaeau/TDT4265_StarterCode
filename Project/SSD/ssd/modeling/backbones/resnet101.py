@@ -10,8 +10,6 @@ from typing import Tuple, List
 #         self.vgg = nn.ModuleList(list(torchvision.models.vgg16(pretrained=True).features)[:-1])
 #         self.vgg[16].ceil_mode = True
 
-
-
 class ResNet101(nn.Module):
     def __init__(self):
         super().__init__()

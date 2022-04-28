@@ -7,14 +7,27 @@ from tops.config import LazyCall as L
 from ssd.data.transforms import (
     ToTensor, RandomHorizontalFlip, RandomSampleCrop, Normalize, Resize,
     GroundTruthBoxesToAnchors)
-from .ssd300 import train, anchors, optimizer, schedulers, model, data_train, data_val, loss_objective
+# from .ssd300 import train, anchors, optimizer, schedulers, model, data_train, data_val, loss_objective
 from .utils import get_dataset_dir
 
 
-model.feature_extractor = torchvision.ops.feature_pyramid_network(
-    in_channels_list=(3, 300, 300),
-    output_shape=(1, 256, 256),
-    num_features=256,
-    freeze_bn=True,
-    num_classes=21,
+from .tdt4265_2_2 import (
+    train,
+    optimizer,
+    schedulers,
+    loss_objective,
+    model,
+    # backbone,
+    data_train,
+    data_val,
+    train_cpu_transform,
+    val_cpu_transform,
+    gpu_transform,
+    label_map,
+    anchors
 )
+
+# Keep the model, except change the backbone and number of classes
+model.feature_extractor = L(backbones.ResNet101)()
+
+backbone

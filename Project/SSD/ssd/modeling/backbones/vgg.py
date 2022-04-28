@@ -88,4 +88,3 @@ class VGG(nn.Module):
             features.append(x)
 
         return tuple(features)
-
