@@ -45,15 +45,11 @@ return_nodes = {
 
 # MaskRCNN requires a backbone with an attached FPN
 class Resnet101WithFPN(torch.nn.Module):
-    def __init__(self,
-        output_channels: List[int],
-            image_channels: int,
-            output_feature_sizes: List[Tuple[int]]
-        ):
+    def __init__(self):
         super().__init__()
         # super(Resnet101WithFPN, self).__init__()
-        self.out_channels = output_channels
-        self.output_feature_shape = output_feature_sizes
+        # self.out_channels = output_channels
+        # self.output_feature_shape = output_feature_sizes
 
         # Get a resnet101 backbone
         m = torchvision.models.resnet101(pretrained=True)
@@ -61,32 +57,40 @@ class Resnet101WithFPN(torch.nn.Module):
         self.body = torchvision.models.feature_extraction.create_feature_extractor(
             m, return_nodes={f'layer{k}': str(v)
                              for v, k in enumerate([1, 2, 3, 4])})
+        # self.resnet = nn.ModuleList(list(torchvision.models.resnet101(pretrained=True).features)[:-2])
+        # print(self.resnet)
+        # self.body = torchvision.models.feature_extraction.create_feature_extractor(m)
         # Dry run to get number of channels for FPN
-        inp = torch.randn(1, image_channels, 128, 1024)
+        inp = torch.randn(1, 3, 128, 1024)
         with torch.no_grad():
             out = self.body(inp)
         in_channels_list = [o.shape[1] for o in out.values()]
         print(in_channels_list)
         # Build FPN
-        # self.out_channels = 256
+        # self.out_channels = [128, 256, 128, 128, 64, 64]
+        self.out_channels = 4
         self.fpn = torchvision.ops.FeaturePyramidNetwork(
             in_channels_list, out_channels=self.out_channels)
 
     def forward(self, x):
         x = self.body(x)
         x = self.fpn(x)
+        print(x)
+        out_features = [x]
 
-        out_features = []
-        out_features.append(x)
+        # for i in range(len(x)):
+        #     x= self.fpn(x)[str(i)]
 
-        for idx, feature in enumerate(out_features):
-            out_channel = self.out_channels[idx]
-            h, w = self.output_feature_shape[idx]
-            expected_shape = (out_channel, h, w)
-            assert feature.shape[1:] == expected_shape, \
-                f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
-        assert len(out_features) == len(self.output_feature_shape),\
-            f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
+        # out_features.append(x)
+
+        # for idx, feature in enumerate(out_features):
+        #     out_channel = self.out_channels[idx]
+        #     h, w = self.output_feature_shape[idx]
+        #     expected_shape = (out_channel, h, w)
+        #     assert feature.shape[1:] == expected_shape, \
+        #         f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
+        # assert len(out_features) == len(self.output_feature_shape),\
+        #     f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         return tuple(out_features)
 
 # # Now we can build our model!
