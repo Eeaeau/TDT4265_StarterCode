@@ -48,7 +48,6 @@ class Layer(nn.Sequential):
             nn.ReLU(),
         )
 
-
 # MaskRCNN requires a backbone with an attached FPN
 class Resnet101WithFPN(torch.nn.Module):
     def __init__(self):
