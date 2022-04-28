@@ -20,7 +20,6 @@ anchors.aspect_ratios=[[2, 3], [2, 3], [2, 3], [2, 3], [2], [2]]
 anchors.image_shape="${train.imshape}"
 
 
-
 train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
     L(ToTensor)(),
     L(Resize)(imshape="${train.imshape}"),
