@@ -156,7 +156,7 @@ def numOverlapped(dataloader_train,dataloader_val,cfg,viz=False):
             
             for idx, x in enumerate(batch_t['boxes'].squeeze().numpy()):
                 if idx == i_t:
-                    pass
+                    continue
                 x1 = max(x[0],box_t[0]) #left
                 x2 = min(x[2],box_t[2]) #right
                 y1 = max(x[1],box_t[1]) #bot
@@ -176,7 +176,7 @@ def numOverlapped(dataloader_train,dataloader_val,cfg,viz=False):
             
             for idxv, x_v in enumerate(batch_v['boxes'].squeeze().numpy()):
                 if idxv == i_v:
-                    pass
+                    continue
                 x1v = max(x_v[0],box_v[0]) #left
                 x2v = min(x_v[2],box_v[2]) #right
                 y1v = max(x_v[1],box_v[1]) #bot
@@ -395,11 +395,11 @@ def main():
     #w_t, h_t = widthHight(dataloader_train)
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
-    #plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
+    plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
     
     df = createDataframe(dataloader_train, dataloader_val, labels)
     #plotCenters(df)
-    aspectRatioPlot(df)
+    #aspectRatioPlot(df)
     #print(df.head())
     #print(df.describe())
     #df = df[df['dataset']=='train']
