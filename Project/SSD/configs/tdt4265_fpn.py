@@ -20,4 +20,8 @@ from tops.config import LazyCall as L
 from ssd.modeling.backbones import Resnet101WithFPN
 
 # backbone = L(Resnet101WithFPN)()
-backbone = L(Resnet101WithFPN)()
+backbone = L(Resnet101WithFPN)(
+    image_channels=3,
+    output_feature_sizes="${anchors.feature_sizes}",
+    model_type='resnet101',
+    pretrained=True)
