@@ -11,43 +11,6 @@ from torch import nn
 
 
 
-
-
-class Layer(nn.Sequential):
-    def __init__(self,channels,layer_index):
-        # [1, 512, 4, 32]
-        super().__init__(
-            nn.ReLU(),
-            #[64, 128, 256, 512, 64, 64],
-            #i= 512, o=64
-            #i=64, o=64
-            # next
-            # i=64, o=64
-            # i=64, o=64
-            nn.Conv2d(in_channels=channels[layer_index-1], out_channels=channels[layer_index], kernel_size=1, stride=1, padding=0),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=channels[layer_index], out_channels=channels[layer_index], kernel_size=1, stride=2, padding=0),
-            nn.ReLU(),
-        )
-
-
-class Layer(nn.Sequential):
-    def __init__(self,channels,layer_index):
-        # [1, 512, 4, 32]
-        super().__init__(
-            nn.ReLU(),
-            #[64, 128, 256, 512, 64, 64],
-            #i= 512, o=64
-            #i=64, o=64
-            # next
-            # i=64, o=64
-            # i=64, o=64
-            nn.Conv2d(in_channels=channels[layer_index-1], out_channels=channels[layer_index], kernel_size=1, stride=1, padding=0),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=channels[layer_index], out_channels=channels[layer_index], kernel_size=1, stride=2, padding=0),
-            nn.ReLU(),
-        )
-
 # MaskRCNN requires a backbone with an attached FPN
 class Resnet101WithFPN(torch.nn.Module):
     def __init__(self):
@@ -55,10 +18,10 @@ class Resnet101WithFPN(torch.nn.Module):
         # super(Resnet101WithFPN, self).__init__()
 
         self.out_channels = [256, 256, 256, 2048, 64, 64]
-        
+
         m = resnet101(pretrained=True)
 
-        
+
         self.extras = nn.ModuleList([
             torch.nn.Sequential(
                 BasicBlock (inplanes = self.out_channels[-3], planes = self.out_channels[-2], stride = 2,
@@ -77,12 +40,12 @@ class Resnet101WithFPN(torch.nn.Module):
 
 
 
-       
+
         self.body = create_feature_extractor(
             m, return_nodes={f'layer{k}': str(v)
                              for v, k in enumerate([1, 2, 3, 4])})
 
-        
+
         inp = torch.randn(1, 3, 128, 1024)
 
         with torch.no_grad():
@@ -110,27 +73,28 @@ class Resnet101WithFPN(torch.nn.Module):
         self.fpn = FeaturePyramidNetwork(
             in_channels_list, out_channels=256)
 
-        self.out_channels = [256, 256, 256,256, 256, 256]
+        self.out_channels = [256] * 6
+        # self.out_channels = [256, 256, 256, 256, 64, 64]
         print("############################################################")
     def forward(self, x):
 
         features = []
         x = self.body(x)
         #print(x["3"].shape)
-        
+
         #print("\n finishe body \n")
 
         for i,extra in enumerate(self.extras):
-            
+
             x[f"{i+4}"] = extra(x[f"{i+3}"])
-            
+
             #features.append(x)
         #print("\n finishe extras \n")
-        
+
         x = self.fpn(x)
         #for i in range(6):
            # print(x[f"{i}"].shape)
-        
+
         features.extend(x.values() )
 
 
