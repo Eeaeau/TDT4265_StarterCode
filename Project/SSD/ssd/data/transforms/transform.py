@@ -2,6 +2,7 @@ import torchvision
 import torch
 import numpy as np
 import random
+import torchvision.transforms as T
 
 class ToTensor:
     def __call__(self, sample):
@@ -185,4 +186,43 @@ class Resize(torch.nn.Module):
     @torch.no_grad()
     def forward(self, batch):
         batch["image"] = torchvision.transforms.functional.resize(batch["image"], self.imshape, antialias=True)
+        return batch
+
+
+class GaussianBlurr(torch.nn.Module):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.kernel_size = (5, 9)
+        self.sigma = (0.1, 5)
+
+    @torch.no_grad()
+    def forward(self, batch):
+        batch["image"] = torchvision.transforms.functional.gaussian_blur(batch["image"], self.kernel_size, self.sigma)
+        return batch
+
+class ColorJitter(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.brightness= 0.5
+        self.contrast =0.5
+        self.saturation =0.5
+        self.hue = 0.5
+        self.jitter = T.ColorJitter(brightness=self.brightness,contrast = self.contrast, saturation =self.saturation ,hue=self.hue)
+    @torch.no_grad()
+    def forward(self, batch):
+         batch["image"] =self.jitter(batch["image"])
+         return batch
+
+
+
+class AdjustSharpness(torch.nn.Module):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sharpness_factor =2
+
+    @torch.no_grad()
+    def forward(self, batch):
+        batch["image"] = torchvision.transforms.functional.adjust_sharpness(batch["image"], self.sharpness_factor)
         return batch
