@@ -1,5 +1,5 @@
 from ssd.modeling import backbones
-from .tdt4265_2_2 import (
+from .tdt4265_augmented import (
     train,
     optimizer,
     schedulers,

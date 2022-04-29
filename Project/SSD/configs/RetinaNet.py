@@ -11,7 +11,7 @@ from ssd.data.transforms import (
 from .utils import get_dataset_dir
 
 
-from .tdt4265_2_2 import (
+from .tdt4265_augmented import (
     train,
     optimizer,
     schedulers,
