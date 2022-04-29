@@ -70,9 +70,10 @@ class Resnet101WithFPN(torch.nn.Module):
         with torch.no_grad():
             out = self.body(inp)
             # print(out)
-            x = out["3"]
+            x = out["3"] #hva er poenget med denne?
+            
 
-            in_channels_list = [o.shape[1] for o in out.values()]
+        in_channels_list = [o.shape[1] for o in out.values()] #skal denne være inni with torch.no_grad?
 
         # print(self.extras[0](x))
 

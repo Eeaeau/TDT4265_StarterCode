@@ -1,110 +1,112 @@
-import torch
+
 import torch.nn as nn
-from .anchor_encoder import AnchorEncoder
-from torchvision.ops import batched_nms
+import torch
+import math
+import torch.nn.functional as F
 
+def hard_negative_mining(loss, labels, neg_pos_ratio):
+    """
+    It used to suppress the presence of a large number of negative prediction.
+    It works on image level not batch level.
+    For any example/image, it keeps all the positive predictions and
+     cut the number of negative predictions to make sure the ratio
+     between the negative examples and positive examples is no more
+     the given ratio for an image.
+    Args:
+        loss (N, num_priors): the loss for each example.
+        labels (N, num_priors): the labels.
+        neg_pos_ratio:  the ratio between the negative examples and positive examples.
+    """
+    pos_mask = labels > 0
+    num_pos = pos_mask.long().sum(dim=1, keepdim=True)
+    num_neg = num_pos * neg_pos_ratio
 
-class SSD300(nn.Module):
-    def __init__(self, 
-            feature_extractor: nn.Module,
-            anchors,
-            loss_objective,
-            num_classes: int):
+    loss[pos_mask] = -math.inf
+    _, indexes = loss.sort(dim=1, descending=True)
+    _, orders = indexes.sort(dim=1)
+    neg_mask = orders < num_neg
+    return pos_mask | neg_mask
+
+def focal_loss(y, p,alpha=1,gamma=2):
+    print(type(p))
+    print(p.shape)
+    print(f'p: {p}')
+    print(type(y))
+    print(y.shape)
+    print(f'y: {y}')
+   
+    #weights = torch.pow(-)
+    t = y.float() * (1 - p) ** gamma * p.log()
+    return -t.sum()
+
+class FocalLoss(nn.Module):
+    """
+        Implements the loss as the sum of the followings:
+        1. Confidence Loss: All labels, with hard negative mining
+        2. Localization Loss: Only on positive labels
+        Suppose input dboxes has the shape 8732x4
+    """
+    def __init__(self, anchors):
         super().__init__()
+        self.scale_xy = 1.0/anchors.scale_xy
+        self.scale_wh = 1.0/anchors.scale_wh
+        self.alpha = [[[0.01], [1],[1],[1],[1],[1],[1],[1],[1]]]
+        self.sl1_loss = nn.SmoothL1Loss(reduction='none')
+        self.anchors = nn.Parameter(anchors(order="xywh").transpose(0, 1).unsqueeze(dim = 0),
+            requires_grad=False)
+        self.gamma = 2
+
+    def _loc_vec(self, loc):
         """
-            Implements the SSD network.
-            Backbone outputs a list of features, which are gressed to SSD output with regression/classification heads.
+            Generate Location Vectors
         """
-
-        self.feature_extractor = feature_extractor
-        self.loss_func = loss_objective
-        self.num_classes = num_classes
-        self.regression_heads = []
-        self.classification_heads = []
-
-        # Initialize output heads that are applied to each feature map from the backbone.
-        for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
-            self.regression_heads.append(nn.Conv2d(out_ch, n_boxes * 4, kernel_size=3, padding=1))
-            self.classification_heads.append(nn.Conv2d(out_ch, n_boxes * self.num_classes, kernel_size=3, padding=1))
-
-        self.regression_heads = nn.ModuleList(self.regression_heads)
-        self.classification_heads = nn.ModuleList(self.classification_heads)
-        self.anchor_encoder = AnchorEncoder(anchors)
-        self._init_weights()
-
-    def _init_weights(self):
-        layers = [*self.regression_heads, *self.classification_heads]
-        for layer in layers:
-            for param in layer.parameters():
-                if param.dim() > 1: nn.init.xavier_uniform_(param)
-
-    def regress_boxes(self, features):
-        locations = []
-        confidences = []
-        for idx, x in enumerate(features):
-            bbox_delta = self.regression_heads[idx](x).view(x.shape[0], 4, -1)
-            bbox_conf = self.classification_heads[idx](x).view(x.shape[0], self.num_classes, -1)
-            locations.append(bbox_delta)
-            confidences.append(bbox_conf)
-        bbox_delta = torch.cat(locations, 2).contiguous()
-        confidences = torch.cat(confidences, 2).contiguous()
-        return bbox_delta, confidences
-
+        gxy = self.scale_xy*(loc[:, :2, :] - self.anchors[:, :2, :])/self.anchors[:, 2:, ]
+        gwh = self.scale_wh*(loc[:, 2:, :]/self.anchors[:, 2:, :]).log()
+        return torch.cat((gxy, gwh), dim=1).contiguous()
     
-    def forward(self, img: torch.Tensor, **kwargs):
+    def forward(self,
+            bbox_delta: torch.FloatTensor, confs: torch.FloatTensor,
+            gt_bbox: torch.FloatTensor, gt_labels: torch.LongTensor):
         """
-            img: shape: NCHW
+        NA is the number of anchor boxes (by default this is 8732)
+            bbox_delta: [batch_size, 4, num_anchors]
+            confs: [batch_size, num_classes, num_anchors]
+            gt_bbox: [batch_size, num_anchors, 4]
+            gt_label = [batch_size, num_anchors]
         """
-        if not self.training:
-            return self.forward_test(img, **kwargs)
-        features = self.feature_extractor(img)
-        return self.regress_boxes(features)
-    
-    def forward_test(self,
-            img: torch.Tensor,
-            imshape=None,
-            nms_iou_threshold=0.5, max_output=200, score_threshold=0.05):
-        """
-            img: shape: NCHW
-            nms_iou_threshold, max_output is only used for inference/evaluation, not for training
-        """
-        features = self.feature_extractor(img)
-        bbox_delta, confs = self.regress_boxes(features)
-        boxes_ltrb, confs = self.anchor_encoder.decode_output(bbox_delta, confs)
-        predictions = []
-        for img_idx in range(boxes_ltrb.shape[0]):
-            boxes, categories, scores = filter_predictions(
-                boxes_ltrb[img_idx], confs[img_idx],
-                nms_iou_threshold, max_output, score_threshold)
-            if imshape is not None:
-                H, W = imshape
-                boxes[:, [0, 2]] *= H
-                boxes[:, [1, 3]] *= W
-            predictions.append((boxes, categories, scores))
-        return predictions
+        gt_bbox = gt_bbox.transpose(1, 2).contiguous() # reshape to [batch_size, 4, num_anchors]
+        with torch.no_grad():
+            hot_encoded = nn.functional.one_hot(gt_labels, num_classes=confs.shape[1]).transpose(1,2)
+            to_log = - F.log_softmax(confs, dim=1)
+            p_k = - F.softmax(confs, dim=1)
+            #mask = hard_negative_mining(to_log, gt_labels, 3.0)
+            alpha = torch.as_tensor([[[0.01], [1],[1],[1],[1],[1],[1],[1],[1]]]).to(p_k.device)
+            weight = torch.pow(1.0-p_k, self.gamma)
+            focal = -alpha * weight * to_log
 
- 
-def filter_predictions(
-        boxes_ltrb: torch.Tensor, confs: torch.Tensor,
-        nms_iou_threshold: float, max_output: int, score_threshold: float):
-        """
-            boxes_ltrb: shape [N, 4]
-            confs: shape [N, num_classes]
-        """
-        assert 0 <= nms_iou_threshold <= 1
-        assert max_output > 0
-        assert 0 <= score_threshold <= 1
-        scores, category = confs.max(dim=1)
-
-        # 1. Remove low confidence boxes / background boxes
-        mask = (scores > score_threshold).logical_and(category != 0)
-        boxes_ltrb = boxes_ltrb[mask]
-        scores = scores[mask]
-        category = category[mask]
-
-        # 2. Perform non-maximum-suppression
-        keep_idx = batched_nms(boxes_ltrb, scores, category, iou_threshold=nms_iou_threshold)
-
-        # 3. Only keep max_output best boxes (NMS returns indices in sorted order, decreasing w.r.t. scores)
-        keep_idx = keep_idx[:max_output]
-        return boxes_ltrb[keep_idx], category[keep_idx], scores[keep_idx]
+            #loss_tmp = torch.einsum('bc...,bc...->b...', (hot_encoded, focal))
+            loss_tmp = torch.sum(hot_encoded * focal, dim=1)
+            loss = torch.mean(loss_tmp)
+            #mask = focal_loss(to_log, gt_labels, alpha=self.alpha)
+        #classification_loss = F.cross_entropy(confs, gt_labels, reduction="none")
+        #classification_loss = classification_loss[mask].sum()
+        print(f'loss: {loss}')
+        pos_mask = (gt_labels > 0).unsqueeze(1).repeat(1, 4, 1)
+        bbox_delta = bbox_delta[pos_mask]
+        gt_locations = self._loc_vec(gt_bbox)
+        gt_locations = gt_locations[pos_mask]
+        regression_loss = F.smooth_l1_loss(bbox_delta, gt_locations, reduction="sum")
+        num_pos = gt_locations.shape[0]/4
+        #total_loss = regression_loss/num_pos + classification_loss/num_pos
+        total_loss = regression_loss/num_pos + loss/num_pos
+        classification_loss=loss/num_pos
+        to_log = dict(
+            regression_loss=regression_loss/num_pos,
+            #classification_loss=classification_loss/num_pos,
+            classification_loss=loss/num_pos,
+            
+            total_loss=total_loss
+        )
+        print(f'Classification loss: {classification_loss}')
+        print(f'Total loss: {total_loss}')
+        return total_loss, to_log

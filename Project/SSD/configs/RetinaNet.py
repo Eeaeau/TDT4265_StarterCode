@@ -28,6 +28,6 @@ from .tdt4265_augmented import (
 )
 
 # Keep the model, except change the backbone and number of classes
-model.feature_extractor = L(backbones.ResNet101)()
+
 
 backbone
