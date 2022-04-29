@@ -71,7 +71,7 @@ data_train = dict(
         ])
     ),
     dataloader=L(torch.utils.data.DataLoader)(
-        dataset="${..dataset}", num_workers=4, pin_memory=True, shuffle=True, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate,
+        dataset="${..dataset}", num_workers=0, pin_memory=True, shuffle=True, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate,
         drop_last=True
     ),
     # GPU transforms can heavily speedup data augmentations.
@@ -88,7 +88,7 @@ data_val = dict(
         ])
     ),
     dataloader=L(torch.utils.data.DataLoader)(
-        dataset="${..dataset}", num_workers=4, pin_memory=True, shuffle=False, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate_val
+        dataset="${..dataset}", num_workers=0, pin_memory=True, shuffle=False, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate_val
     ),
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
         L(Normalize)(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
