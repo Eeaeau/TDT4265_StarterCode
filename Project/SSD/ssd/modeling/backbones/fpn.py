@@ -1,6 +1,6 @@
 from queue import PriorityQueue
 import torch
-from torchvision.models import resnet101
+import torchvision.models as models
 from torchvision.models.resnet import BasicBlock
 from torchvision.models.feature_extraction import get_graph_node_names
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -12,15 +12,26 @@ from torch import nn
 
 
 # MaskRCNN requires a backbone with an attached FPN
-class Resnet101WithFPN(torch.nn.Module):
-    def __init__(self):
+class ResnetWithFPN(torch.nn.Module):
+    def __init__(self, model_version="resnet34"):
         super().__init__()
         # super(Resnet101WithFPN, self).__init__()
+        # self.out_channels = [256, 256, 256, 2048, 64, 64]
+        self.out_channels = [256, 512, 1024, 2048, 64, 64]
 
-        self.out_channels = [256, 256, 256, 2048, 64, 64]
 
-        m = resnet101(pretrained=True)
+        self.name = model_version +"WithFPN"
 
+        if model_version == "resnet34":
+            m = models.resnet34(pretrained=True)
+        elif model_version == "resnet50":
+            m = models.resnet50(pretrained=True)
+        elif model_version == "resnet101":
+            m = models.resnet101(pretrained=True)
+        elif model_version == "resnet152":
+            m = models.resnet152(pretrained=True)
+        else:
+            raise NotImplementedError("Only resnet50, resnet101, and resnet152 are supported")
 
         self.extras = nn.ModuleList([
             torch.nn.Sequential(
@@ -51,8 +62,8 @@ class Resnet101WithFPN(torch.nn.Module):
         with torch.no_grad():
             out = self.body(inp)
             # print(out)
-            x = out["3"] #hva er poenget med denne?
-            
+            x = out.keys()[-1] #hva er poenget med denne?
+
 
         in_channels_list = [o.shape[1] for o in out.values()] #skal denne være inni with torch.no_grad?
 
@@ -84,7 +95,7 @@ class Resnet101WithFPN(torch.nn.Module):
 
         #print("\n finishe body \n")
 
-        for i,extra in enumerate(self.extras):
+        for i, extra in enumerate(self.extras):
 
             x[f"{i+4}"] = extra(x[f"{i+3}"])
 

@@ -1,4 +1,4 @@
-from ssd.modeling import backbones
+# from ssd.modeling import backbones
 from .tdt4265_augmented import (
     train,
     optimizer,
@@ -14,12 +14,11 @@ from .tdt4265_augmented import (
     label_map,
     anchors
 )
-import torchvision
 
 from tops.config import LazyCall as L
-from ssd.modeling.backbones import Resnet101WithFPN
+from ssd.modeling.backbones import ResnetWithFPN
 
-backbone = L(Resnet101WithFPN)()
+backbone = L(ResnetWithFPN)()
 # backbone = L(Resnet101WithFPN)(
 #     image_channels=3,
 #     output_feature_sizes="${anchors.feature_sizes}",

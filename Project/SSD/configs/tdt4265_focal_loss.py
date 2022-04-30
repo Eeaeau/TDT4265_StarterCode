@@ -1,10 +1,8 @@
-from ssd.modeling import backbones
-
 from .tdt4265_fpn import (
     train,
     optimizer,
     schedulers,
-    loss_objective,
+    #loss_objective,
     model,
     backbone,
     data_train,
