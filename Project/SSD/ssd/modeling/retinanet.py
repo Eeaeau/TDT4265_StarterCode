@@ -10,7 +10,7 @@ class RetinaNet(nn.Module):
             anchors,
             loss_objective,
             num_classes,
-            anchor_prob_initialization):
+            anchor_prob_initialization: bool):
         super().__init__()
         """
             Implements the SSD network.
@@ -22,7 +22,7 @@ class RetinaNet(nn.Module):
         self.num_classes = num_classes
         self.regression_heads = []
         self.classification_heads = []
-
+        self.anchor_prob_initialization = anchor_prob_initialization
         # Initialize output heads that are applied to each feature map from the backbone.
         # for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
 
@@ -66,11 +66,12 @@ class RetinaNet(nn.Module):
             for param in layer.parameters():
                 if param.dim() > 1:
                     nn.init.xavier_uniform_(param)
-                    if hasattr(layer, "bias"):
-                        # print(layer.key(), "bias:", layer.bias)
-                        print(layer)
-                        layer.bias.data.fill_(0)
-                        # nn.init.constant_(layer.bias, 0)
+                    if self.anchor_prob_initialization:
+                        if hasattr(layer, "bias"):
+                            # print(layer.key(), "bias:", layer.bias)
+                            print(layer)
+                            layer.bias.data.fill_(0)
+                            # nn.init.constant_(layer.bias, 0)
 
 
     def regress_boxes(self, features):
