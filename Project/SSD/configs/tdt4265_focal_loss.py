@@ -19,4 +19,4 @@ from .tdt4265_fpn import (
 from tops.config import LazyCall as L
 from ssd.modeling import FocalLoss
 #loss_objective = L(FocalLoss)(anchors = "${anchors}", alpha= [0.01,*[1 for i in range(model.num_classes-1)]])
-loss_objective = L(FocalLoss)(anchors = "${anchors}")
+loss_objective = L(FocalLoss)(anchors = "${anchors}", alpha=[[[10],[1000],[1000],[1000],[1000],[1000],[1000],[1000],[1000]]])
