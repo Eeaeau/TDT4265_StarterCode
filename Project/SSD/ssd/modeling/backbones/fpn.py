@@ -13,7 +13,7 @@ from torch import nn
 
 # MaskRCNN requires a backbone with an attached FPN
 class ResnetWithFPN(torch.nn.Module):
-    def __init__(self, inp=torch.randn(1, 3, 128, 1024), model_version="resnet50"):
+    def __init__(self, inp=torch.randn(1, 3, 128, 1024), model_version="resnet50", pretrained=True):
         super().__init__()
         # super(Resnet101WithFPN, self).__init__()
         self.out_channels = [256, 256, 256, 2048, 64, 64]
@@ -21,17 +21,18 @@ class ResnetWithFPN(torch.nn.Module):
 
 
         self.name = model_version +"WithFPN"
-
-        if model_version == "resnet34":
-            m = models.resnet34(pretrained=True)
-        elif model_version == "resnet50":
-            m = models.resnet50(pretrained=True)
-        elif model_version == "resnet101":
-            m = models.resnet101(pretrained=True)
-        elif model_version == "resnet152":
-            m = models.resnet152(pretrained=True)
-        else:
-            raise NotImplementedError("Only resnet50, resnet101, and resnet152 are supported")
+        print(f'Model used: {model_version}')
+        m = torch.hub.load('pytorch/vision:v0.11.2', model_version, pretrained=pretrained) #'pytorch/vision:v0.11.2' used here.
+        # if model_version == "resnet34":
+        #     m = models.resnet34(pretrained=True)
+        # elif model_version == "resnet50":
+        #     m = models.resnet50(pretrained=True)
+        # elif model_version == "resnet101":
+        #     m = models.resnet101(pretrained=True)
+        # elif model_version == "resnet152":
+        #     m = models.resnet152(pretrained=True)
+        # else:
+        #     raise NotImplementedError("Only resnet50, resnet101, and resnet152 are supported")
 
         self.extras = nn.ModuleList([
             torch.nn.Sequential(
