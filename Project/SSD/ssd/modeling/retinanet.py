@@ -27,7 +27,7 @@ class RetinaNet(nn.Module):
         # for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
 
         out_ch = 256
-        n_anchors = anchors.num_boxes_per_fmap[0]
+        self.n_anchors = anchors.num_boxes_per_fmap[0]
 
         self.classification_heads = nn.Sequential(
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
@@ -38,7 +38,7 @@ class RetinaNet(nn.Module):
             nn.ReLU(),
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Conv2d(out_ch, self.num_classes * n_anchors, kernel_size=3, padding=1),
+            nn.Conv2d(out_ch, self.num_classes * self.n_anchors, kernel_size=3, padding=1),
             nn.ReLU()
         )
 
@@ -51,7 +51,7 @@ class RetinaNet(nn.Module):
             nn.ReLU(),
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Conv2d(out_ch, 4*n_anchors, kernel_size=3, padding=1),
+            nn.Conv2d(out_ch, 4*self.n_anchors, kernel_size=3, padding=1),
             nn.ReLU()
         )
 
@@ -62,16 +62,36 @@ class RetinaNet(nn.Module):
 
     def _init_weights(self):
         layers = [*self.regression_heads, *self.classification_heads]
-        for layer in layers:
-            for param in layer.parameters():
-                if param.dim() > 1:
-                    nn.init.xavier_uniform_(param)
-                    if self.anchor_prob_initialization:
-                        if hasattr(layer, "bias"):
-                            # print(layer.key(), "bias:", layer.bias)
-                            print(layer)
-                            layer.bias.data.fill_(0)
-                            # nn.init.constant_(layer.bias, 0)
+        if not self.anchor_prob_initialization:
+            for layer in layers:
+                for param in layer.parameters():
+                    if param.dim() > 1:
+                        nn.init.xavier_uniform_(param)
+
+        else:
+            for layer in layers:
+                for i, param in enumerate(layer.parameters()):
+                    # Sorting out the weights
+                    # print(param.shape)
+                    if param.dim() > 1:
+                        nn.init.normal_(param, 0, 0.01)
+                        print("layer weight:", layer.weight.shape)
+                        print("layer bias:", layer.bias.shape)
+                    if hasattr(layer, "bias"):
+                        nn.init.zeros_(layer.bias)
+                        p = 0.99
+                        layer.bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+
+                    # if i == len(layer.parameters()):
+                    #     print("last")
+
+            pi = 0.01
+            b = torch.log(torch.tensor((1-pi)/(pi)))
+            nn.init.constant_(layers[-2].bias, b)
+
+            layers[-2].bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+
+
 
 
     def regress_boxes(self, features):
@@ -80,6 +100,7 @@ class RetinaNet(nn.Module):
         for idx, x in enumerate(features):
             bbox_delta = self.regression_heads(x).view(x.shape[0], 4, -1)
             bbox_conf = self.classification_heads(x).view(x.shape[0], self.num_classes, -1)
+            # print("bbox_conf:", bbox_delta.shape)
             locations.append(bbox_delta)
             confidences.append(bbox_conf)
         bbox_delta = torch.cat(locations, 2).contiguous()
