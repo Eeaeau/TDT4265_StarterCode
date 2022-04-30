@@ -51,7 +51,7 @@ class SSDMultiboxLoss(nn.Module):
         gxy = self.scale_xy*(loc[:, :2, :] - self.anchors[:, :2, :])/self.anchors[:, 2:, ]
         gwh = self.scale_wh*(loc[:, 2:, :]/self.anchors[:, 2:, :]).log()
         return torch.cat((gxy, gwh), dim=1).contiguous()
-    
+
     def forward(self,
             bbox_delta: torch.FloatTensor, confs: torch.FloatTensor,
             gt_bbox: torch.FloatTensor, gt_labels: torch.LongTensor):

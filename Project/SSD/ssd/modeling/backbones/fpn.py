@@ -13,11 +13,11 @@ from torch import nn
 
 # MaskRCNN requires a backbone with an attached FPN
 class ResnetWithFPN(torch.nn.Module):
-    def __init__(self, model_version="resnet34"):
+    def __init__(self, inp=torch.randn(1, 3, 128, 1024), model_version="resnet50"):
         super().__init__()
         # super(Resnet101WithFPN, self).__init__()
-        # self.out_channels = [256, 256, 256, 2048, 64, 64]
-        self.out_channels = [256, 512, 1024, 2048, 64, 64]
+        self.out_channels = [256, 256, 256, 2048, 64, 64]
+        # self.out_channels = [256, 512, 1024, 2048, 64, 64]
 
 
         self.name = model_version +"WithFPN"
@@ -56,14 +56,11 @@ class ResnetWithFPN(torch.nn.Module):
             m, return_nodes={f'layer{k}': str(v)
                              for v, k in enumerate([1, 2, 3, 4])})
 
-
-        inp = torch.randn(1, 3, 128, 1024)
-
         with torch.no_grad():
             out = self.body(inp)
             # print(out)
-            x = out.keys()[-1] #hva er poenget med denne?
-
+            # x = out["3"] #hva er poenget med denne?
+            x = list(out.values())[-1]
 
         in_channels_list = [o.shape[1] for o in out.values()] #skal denne være inni with torch.no_grad?
 
@@ -80,10 +77,10 @@ class ResnetWithFPN(torch.nn.Module):
         print("---------------------------------------", in_channels_list, "---------------------------------------")
 
         # Build FPN
-        # self.out_channels = [256, 512, 1024, 2048]
         self.fpn = FeaturePyramidNetwork(
             in_channels_list, out_channels=256)
 
+        # self.out_channels = [256, 512, 1024, 2048]
         self.out_channels = [256] * 6
         # self.out_channels = [256, 256, 256, 256, 64, 64]
         print("############################################################")
