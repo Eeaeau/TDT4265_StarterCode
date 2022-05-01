@@ -20,7 +20,9 @@ from ssd.modeling.retinanet import RetinaNet
 from ssd.modeling import AnchorBoxes
 
 # anchors.aspect_ratios = [ [2, 3] , [2, 3], [2, 3], [2, 3], [2, 3], [2, 3] ]
-# anchors.aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
+# anchors.aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3]]
+aspect_ratios=[[3], [3], [3], [3], [2], [2]]
+# anchors.feature_sizes=[[32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]]
 
 model = L(RetinaNet)(
     feature_extractor="${backbone}",
