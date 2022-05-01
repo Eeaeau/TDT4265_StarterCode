@@ -69,6 +69,9 @@ class RetinaNet(nn.Module):
                         nn.init.xavier_uniform_(param)
 
         else:
+            p = 0.99
+            class_bias = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+
             for layer in layers:
                 for i, param in enumerate(layer.parameters()):
                     # Sorting out the weights
@@ -79,20 +82,19 @@ class RetinaNet(nn.Module):
                         print("layer bias:", layer.bias.shape)
                     if hasattr(layer, "bias"):
                         nn.init.zeros_(layer.bias)
-                        p = 0.99
-                        layer.bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+
+                        # layer.bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+                        nn.init.constant_(layer.bias.data[:self.n_anchors], class_bias)
 
                     # if i == len(layer.parameters()):
                     #     print("last")
 
             pi = 0.01
-            b = torch.log(torch.tensor((1-pi)/(pi)))
-            nn.init.constant_(layers[-2].bias, b)
+            end_layer_bias = torch.log(torch.tensor((1-pi)/(pi)))
+            nn.init.constant_(layers[-2].bias.data[self.n_anchors:], end_layer_bias)
 
-            layers[-2].bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
-
-
-
+            # layers[-2].bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+            # nn.init.constant_(layer[-2].bias.data[:self.n_anchors], torch.log(torch.tensor(p*((self.num_classes-1)/(1-p)))))
 
     def regress_boxes(self, features):
         locations = []
