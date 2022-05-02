@@ -28,34 +28,38 @@ class RetinaNet(nn.Module):
 
         out_ch = 256
         self.n_anchors = anchors.num_boxes_per_fmap[0]
+        num_boxes = 0
+        for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
+            self.classification_heads.append(nn.Sequential(
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, self.num_classes * num_boxes, kernel_size=3, padding=1),
+                
+            ))
 
-        self.classification_heads = nn.Sequential(
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, self.num_classes * self.n_anchors, kernel_size=3, padding=1),
-            
-        )
-
-        self.regression_heads = nn.Sequential(
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(out_ch, 4*self.n_anchors, kernel_size=3, padding=1),
-        )
-
+            self.regression_heads.append(nn.Sequential(
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_ch, 4*num_boxes, kernel_size=3, padding=1),
+                
+            ))
+            num_boxes = n_boxes
+        self.last_num_boces = num_boxes
         # self.regression_heads = self.regression_heads
-        # self.classification_heads = nn.ModuleList(self.classification_heads)
+        self.classification_heads = nn.ModuleList(self.classification_heads)
+        self.regression_heads = nn.ModuleList(self.regression_heads)
         self.anchor_encoder = AnchorEncoder(anchors)
         self._init_weights()
 
@@ -99,8 +103,8 @@ class RetinaNet(nn.Module):
         locations = []
         confidences = []
         for idx, x in enumerate(features):
-            bbox_delta = self.regression_heads(x).view(x.shape[0], 4, -1)
-            bbox_conf = self.classification_heads(x).view(x.shape[0], self.num_classes, -1)
+            bbox_delta = self.regression_heads[idx](x).view(x.shape[0], 4, -1)
+            bbox_conf = self.classification_heads[idx](x).view(x.shape[0], self.num_classes, -1)
             # print("bbox_conf:", bbox_delta.shape)
             locations.append(bbox_delta)
             confidences.append(bbox_conf)
