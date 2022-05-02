@@ -39,7 +39,6 @@ class RetinaNet(nn.Module):
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(out_ch, self.num_classes * self.n_anchors, kernel_size=3, padding=1),
-            
         )
 
         self.regression_heads = nn.Sequential(
@@ -60,7 +59,7 @@ class RetinaNet(nn.Module):
         self._init_weights()
 
     def _init_weights(self):
-        layers = [*self.regression_heads, *self.classification_heads]
+        layers = [*self.regression_heads[:-1], *self.classification_heads[:-1]]
         if not self.anchor_prob_initialization:
             for layer in layers:
                 for param in layer.parameters():
@@ -68,32 +67,34 @@ class RetinaNet(nn.Module):
                         nn.init.xavier_uniform_(param)
 
         else:
+            layers = [*self.regression_heads[:-1], *self.classification_heads[:-1]]
             p = 0.99
             class_bias = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
+            print("layers len:", len(layers))
 
             for layer in layers:
                 for i, param in enumerate(layer.parameters()):
                     # Sorting out the weights
                     # print(param.shape)
-                    if param.dim() > 1:
+                    # if param.dim() > 1:
+                    if hasattr(layer, "weight"):
                         nn.init.normal_(param, 0, 0.01)
-                        print("layer weight:", layer.weight.shape)
-                        print("layer bias:", layer.bias.shape)
+                        # print("layer weight:", layer.weight.shape)
+                        # print("layer bias:", layer.bias)
                     if hasattr(layer, "bias"):
                         nn.init.zeros_(layer.bias)
-
                         # layer.bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
                         nn.init.constant_(layer.bias.data[:self.n_anchors], class_bias)
 
-                    # if i == len(layer.parameters()):
-                    #     print("last")
-
             pi = 0.01
             end_layer_bias = torch.log(torch.tensor((1-pi)/(pi)))
-            nn.init.constant_(layers[-2].bias.data[self.n_anchors:], end_layer_bias)
+            # nn.init.constant_(layers[-1].bias.data[self.n_anchors:], end_layer_bias)
+            nn.init.constant_(self.regression_heads[-1].bias.data[self.n_anchors:], end_layer_bias)
+            # nn.init.constant_(self.classification_heads[-1].bias.data[self.n_anchors:], end_layer_bias)
 
             # layers[-2].bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
             # nn.init.constant_(layer[-2].bias.data[:self.n_anchors], torch.log(torch.tensor(p*((self.num_classes-1)/(1-p)))))
+            # exit()
 
     def regress_boxes(self, features):
         locations = []
