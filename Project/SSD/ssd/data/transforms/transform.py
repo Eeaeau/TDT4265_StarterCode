@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import random
 import torchvision.transforms as T
+import torchvision.transforms.functional as TF
 
 class ToTensor:
     def __call__(self, sample):
@@ -188,6 +189,62 @@ class Resize(torch.nn.Module):
         batch["image"] = torchvision.transforms.functional.resize(batch["image"], self.imshape, antialias=True)
         return batch
 
+class RandomAffine(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        # self.imshape = tuple(imshape)
+
+    @torch.no_grad()
+    def forward(self, batch):
+        augmenter = torchvision.transforms.RandomAffine(degrees=(-5, 5), translate=None, scale=None, shear=(-10, 10))
+        batch["image"] = augmenter(batch["image"])
+        return batch
+class myRandomAffine(torchvision.transforms.RandomAffine):
+    def __init__(self) -> None:
+        super().__init__()
+        self.degrees=(-5, 5)
+        self.translate=None
+        self.scale=None
+        self.shear=(-10, 10)
+
+    @torch.no_grad()
+    def forward(self, batch):
+        augmenter = torchvision.transforms.RandomAffine()
+        batch["image"] = augmenter(batch["image"])
+        return batch
+
+class TrivialAugmentWide(torch.nn.Module):
+
+    def __init__(self) -> None:
+        super().__init__()
+        # self.imshape = tuple(imshape)
+
+    @torch.no_grad()
+    def forward(self, batch):
+        augmenter  = torchvision.transforms.TrivialAugmentWide()
+        batch["image"] = augmenter(batch["image"])
+        return batch
+class RandomPosterize(torch.nn.Module):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @torch.no_grad()
+    def forward(self, batch):
+        augmenter  = torchvision.transforms.RandomPosterize(bits = 3)
+        batch["image"] = augmenter(batch["image"])
+        return batch
+class RandomAutocontrast(torch.nn.Module):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @torch.no_grad()
+    def forward(self, batch):
+        augmenter  = torchvision.transforms.RandomAutocontrast()
+        batch["image"] = augmenter(batch["image"])
+        return batch
+
 
 class GaussianBlurr(torch.nn.Module):
 
@@ -200,15 +257,14 @@ class GaussianBlurr(torch.nn.Module):
     def forward(self, batch):
         batch["image"] = torchvision.transforms.functional.gaussian_blur(batch["image"], self.kernel_size, self.sigma)
         return batch
-
 class ColorJitter(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.brightness= 0.5
-        self.contrast =0.5
-        self.saturation =0.5
-        self.hue = 0.5
-        self.jitter = T.ColorJitter(brightness=self.brightness,contrast = self.contrast, saturation =self.saturation ,hue=self.hue)
+        self.brightness= 0.25
+        self.contrast =0.25
+        self.saturation =0.25
+        self.hue = 0.1
+        self.jitter = T.ColorJitter(brightness=self.brightness, contrast = self.contrast, saturation =self.saturation, hue=self.hue)
     @torch.no_grad()
     def forward(self, batch):
          batch["image"] =self.jitter(batch["image"])

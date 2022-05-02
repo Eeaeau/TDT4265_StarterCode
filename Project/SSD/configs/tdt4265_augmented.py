@@ -16,7 +16,7 @@ from .tdt4265 import (
 )
 from ssd.data.transforms import (
     ToTensor, Normalize, Resize,
-    GroundTruthBoxesToAnchors, RandomHorizontalFlip, RandomSampleCrop, GaussianBlurr, AdjustSharpness)
+    GroundTruthBoxesToAnchors, RandomHorizontalFlip, RandomSampleCrop, ColorJitter, GaussianBlurr, AdjustSharpness, TrivialAugmentWide, RandomAffine, RandomAutocontrast, RandomPosterize)
 from tops.config import LazyCall as L
 import torchvision
 from ssd.data import TDT4265Dataset
@@ -34,8 +34,11 @@ train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
 ])
 
 gpu_transform_train = L(torchvision.transforms.Compose)(transforms=[
-    #L(GaussianBlurr)(),
-    #L(AdjustSharpness)(),
+    # L(TrivialAugmentWide)(),
+    L(RandomAffine)(),
+    # L(RandomPosterize)(),
+    L(RandomAutocontrast)(),
+    L(ColorJitter)(),
     L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878]),
 ])
 
