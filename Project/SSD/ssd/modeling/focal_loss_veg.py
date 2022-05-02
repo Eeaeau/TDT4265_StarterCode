@@ -113,7 +113,6 @@ class FocalLoss(nn.Module):
             requires_grad=False)
         self.gamma = gamma
         self.eps = eps
-        
 
     def _loc_vec(self, loc):
         """
@@ -135,7 +134,7 @@ class FocalLoss(nn.Module):
         """
         gt_bbox = gt_bbox.transpose(1, 2).contiguous() # reshape to [batch_size, 4, num_anchors]
         #with torch.no_grad():
-        
+           
         loss = focal_loss_2(confs, gt_labels, alpha=self.alpha)
         
         
