@@ -31,7 +31,8 @@ def download_dataset(zip_path, dataset_path, work_dir, zip_url):
         )
         if not dataset_path.is_dir():
             print("Symlinking", dataset_path, "to", work_dir)
-            os.symlink(work_dir, dataset_path, target_is_directory=False)
+            dataset_path.parent.mkdir(exist_ok=True, parents=True)
+            dataset_path.symlink_to(work_dir)
         else:
             print("Doing nothing.")
         return
