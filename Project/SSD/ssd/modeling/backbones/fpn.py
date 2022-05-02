@@ -39,14 +39,16 @@ class ResnetWithFPN(torch.nn.Module):
                 BasicBlock (inplanes = self.out_channels[-3], planes = self.out_channels[-2], stride = 2,
                 downsample = nn.Sequential(
                     nn.Conv2d(in_channels=self.out_channels[-3], out_channels=self.out_channels[-2], kernel_size=1, stride=2),
-                    nn.ReLU())),
+                    # nn.ReLU())),
+                    nn.BatchNorm2d(self.out_channels[-2]),)),
                 )
             ,
             torch.nn.Sequential(
                 BasicBlock (inplanes = self.out_channels[-2], planes = self.out_channels[-1], stride = 2,
                 downsample = nn.Sequential(
                     nn.Conv2d(in_channels=self.out_channels[-2], out_channels=self.out_channels[-1], kernel_size=1, stride=2),
-                    nn.ReLU())),
+                    # nn.ReLU())),
+                    nn.BatchNorm2d(self.out_channels[-1]),)),
                 )
         ])
 

@@ -18,7 +18,7 @@ def focal_loss(confs, gt_labels, alpha, gamma=2):
 
     weight = torch.pow(1.0-p_k, gamma)
     focal = -alpha * weight * log_pk
-    loss_tmp   =hot_encoded*focal
+    loss_tmp = hot_encoded*focal
     focal_loss = loss_tmp.sum(dim=1).mean()
 
     return focal_loss
