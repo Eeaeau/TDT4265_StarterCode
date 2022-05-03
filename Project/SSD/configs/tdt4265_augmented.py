@@ -35,10 +35,10 @@ train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
 
 gpu_transform_train = L(torchvision.transforms.Compose)(transforms=[
     # L(TrivialAugmentWide)(),
-    L(RandomAffine)(),
+    #L(RandomAffine)(),
     # L(RandomPosterize)(),
-    L(RandomAutocontrast)(),
-    L(ColorJitter)(),
+    #L(RandomAutocontrast)(),
+    #L(ColorJitter)(),
     L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878]),
 ])
 

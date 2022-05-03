@@ -15,9 +15,15 @@ class Normalize(torch.nn.Module):
         batch["image"] = (batch["image"] - self.mean) / self.std
         return batch
 
-class ColorJitter(torchvision.transforms.ColorJitter):
-
-    @torch.no_grad()    
+class ColorJitter(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.brightness= 0.25
+        self.contrast =0.25
+        self.saturation =0.25
+        self.hue = 0.1
+        self.jitter = T.ColorJitter(brightness=self.brightness, contrast = self.contrast, saturation =self.saturation, hue=self.hue)
+    @torch.no_grad()
     def forward(self, batch):
-        batch["image"] = super().forward(batch["image"])
-        return batch
+         batch["image"] =self.jitter(batch["image"])
+         return batch
