@@ -84,12 +84,12 @@ class RetinaNet(nn.Module):
                     if hasattr(layer, "bias"):
                         nn.init.zeros_(layer.bias)
                         # layer.bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
-                        nn.init.constant_(layer.bias.data[:self.n_anchors], class_bias)
-
+                        #nn.init.constant_(layer.bias.data[:self.n_anchors], class_bias)#new method
+            nn.init.constant_(self.classification_heads[-1].bias.data[:self.n_anchors], class_bias)
             pi = 0.01
-            end_layer_bias = torch.log(torch.tensor((1-pi)/(pi)))
+            #end_layer_bias = torch.log(torch.tensor((1-pi)/(pi)))
             # nn.init.constant_(layers[-1].bias.data[self.n_anchors:], end_layer_bias)
-            nn.init.constant_(self.regression_heads[-1].bias.data[self.n_anchors:], end_layer_bias)
+            #nn.init.constant_(self.regression_heads[-1].bias.data[self.n_anchors:], end_layer_bias)
 
             for param in self.classification_heads[-1].parameters():
                     if param.dim() > 1:

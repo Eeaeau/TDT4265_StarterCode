@@ -16,7 +16,7 @@ class ResnetWithFPN(torch.nn.Module):
     def __init__(self, inp=torch.randn(1, 3, 128, 1024), model_version="resnet50", pretrained=True):
         super().__init__()
         # super(Resnet101WithFPN, self).__init__()
-        self.out_channels = [256, 256, 256, 2048, 64, 64]
+        self.out_channels = [256, 256, 256, 2048, 64, 64] #outchannel[3] changed from 2048 to 512 with resnet34
         # self.out_channels = [256, 512, 1024, 2048, 64, 64]
 
 

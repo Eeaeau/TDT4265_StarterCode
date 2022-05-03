@@ -18,7 +18,7 @@ from .tdt4265_augmented import (
 from tops.config import LazyCall as L
 from ssd.modeling.backbones import ResnetWithFPN
 
-backbone = L(ResnetWithFPN)(model_version='resnet101')
+backbone = L(ResnetWithFPN)(model_version='resnet50')
 # backbone = L(Resnet101WithFPN)(
 #     image_channels=3,
 #     output_feature_sizes="${anchors.feature_sizes}",
