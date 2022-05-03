@@ -13,10 +13,10 @@ from torch import nn
 
 # MaskRCNN requires a backbone with an attached FPN
 class ResnetWithFPN(torch.nn.Module):
-    def __init__(self, inp=torch.randn(1, 3, 128, 1024), model_version="resnet50", pretrained=True):
+    def __init__(self, inp=torch.randn(1, 3, 128, 1024), model_version="resnet34", pretrained=True):
         super().__init__()
         # super(Resnet101WithFPN, self).__init__()
-        self.out_channels = [256, 256, 256, 2048, 64, 64] #outchannel[3] changed from 2048 to 512 with resnet34
+        self.out_channels = [256, 256, 256, 512, 1024, 1024]
         # self.out_channels = [256, 512, 1024, 2048, 64, 64]
 
 
@@ -34,23 +34,7 @@ class ResnetWithFPN(torch.nn.Module):
         # else:
         #     raise NotImplementedError("Only resnet50, resnet101, and resnet152 are supported")
 
-        self.extras = nn.ModuleList([
-            torch.nn.Sequential(
-                BasicBlock (inplanes = self.out_channels[-3], planes = self.out_channels[-2], stride = 2,
-                downsample = nn.Sequential(
-                    nn.Conv2d(in_channels=self.out_channels[-3], out_channels=self.out_channels[-2], kernel_size=1, stride=2),
-                    # nn.ReLU())),
-                    nn.BatchNorm2d(self.out_channels[-2]),)),
-                )
-            ,
-            torch.nn.Sequential(
-                BasicBlock (inplanes = self.out_channels[-2], planes = self.out_channels[-1], stride = 2,
-                downsample = nn.Sequential(
-                    nn.Conv2d(in_channels=self.out_channels[-2], out_channels=self.out_channels[-1], kernel_size=1, stride=2),
-                    # nn.ReLU())),
-                    nn.BatchNorm2d(self.out_channels[-1]),)),
-                )
-        ])
+        
 
 
 
@@ -66,6 +50,23 @@ class ResnetWithFPN(torch.nn.Module):
             x = list(out.values())[-1]
 
         in_channels_list = [o.shape[1] for o in out.values()] #skal denne være inni with torch.no_grad?
+        self.extras = nn.ModuleList([
+            torch.nn.Sequential(
+                BasicBlock (inplanes = in_channels_list[-1], planes = self.out_channels[-2], stride = 2,
+                downsample = nn.Sequential(
+                    nn.Conv2d(in_channels=in_channels_list[-1], out_channels=self.out_channels[-2], kernel_size=1, stride=2),
+                    # nn.ReLU())),
+                    nn.BatchNorm2d(self.out_channels[-2]),)),
+                )
+            ,
+            torch.nn.Sequential(
+                BasicBlock (inplanes = self.out_channels[-2], planes = self.out_channels[-1], stride = 2,
+                downsample = nn.Sequential(
+                    nn.Conv2d(in_channels=self.out_channels[-2], out_channels=self.out_channels[-1], kernel_size=1, stride=2),
+                    # nn.ReLU())),
+                    nn.BatchNorm2d(self.out_channels[-1]),)),
+                )
+        ])
 
         # print(self.extras[0](x))
 
@@ -83,7 +84,7 @@ class ResnetWithFPN(torch.nn.Module):
         self.fpn = FeaturePyramidNetwork(
             in_channels_list, out_channels=256)
 
-        # self.out_channels = [256, 512, 1024, 2048]
+        #self.out_channels = [64,128, 256, 512, 1024, 2048]
         self.out_channels = [256] * 6
         # self.out_channels = [256, 256, 256, 256, 64, 64]
         print("############################################################")
@@ -107,19 +108,20 @@ class ResnetWithFPN(torch.nn.Module):
            # print(x[f"{i}"].shape)
 
         features.extend(x.values() )
-
+        out_features = tuple(features)
+        # self.output_feature_shape = [o.shape[-2:] for o in out_features]
 
         # for idx, feature in enumerate(features):
         #     out_channel = self.out_channels[idx]
         #     print("out_channel: ", out_channel, "\n")
         #     print("feature: ", feature, "\n")
-            # h, w = self.output_feature_shape[idx]
+        #     h, w = self.output_feature_shape[idx]
         #     expected_shape = (out_channel, h, w)
         #     assert feature.items().shape[1:] == expected_shape, \
         #         f"Expected shape: {expected_shape}, got: {feature.items().shape[1:]} at output IDX: {idx}"
         # assert len(out_features) == len(self.output_feature_shape),\
         #     f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
-        out_features = tuple(features)
+        
         #print(out_features)
         return tuple(x.values())
 

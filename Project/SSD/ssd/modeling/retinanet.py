@@ -67,7 +67,28 @@ class RetinaNet(nn.Module):
                         nn.init.xavier_uniform_(param)
 
         else:
-            layers = [*self.regression_heads[:-1], *self.classification_heads[:-1]]
+            ##Model1: start
+            ##Model2: start
+            for layer in self.classification_heads:
+                
+                if hasattr(layer, "weight"):
+                        #nn.init.normal_(layer.weight.data, 0, 0.01)
+                        nn.init.kaiming_uniform_(layer.weight.data, mode='fan_in', nonlinearity='relu')
+                        #print("layer weight:", layer.weight.)
+                        
+                if hasattr(layer, "bias"):
+                        nn.init.zeros_(layer.bias.data)
+                
+            for layer in self.regression_heads:
+                
+                if hasattr(layer, "weight"):
+                        nn.init.kaiming_uniform_(layer.weight.data, mode='fan_in', nonlinearity='relu')
+                        
+                if hasattr(layer, "bias"):
+                        nn.init.zeros_(layer.bias.data)
+                
+            #nn.init.constant_(self.classification_heads[-1].bias.data, 0)
+            #nn.init.constant_(self.regression_heads[-1].bias.data, 0)     
             p = 0.99
             class_bias = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
             print("layers len:", len(layers))
