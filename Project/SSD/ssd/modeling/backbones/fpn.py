@@ -36,7 +36,7 @@ class ResnetWithFPN(torch.nn.Module):
         # else:
         #     raise NotImplementedError("Only resnet50, resnet101, and resnet152 are supported")
 
-        
+
 
 
 
@@ -106,8 +106,8 @@ class ResnetWithFPN(torch.nn.Module):
         #print("\n finishe extras \n")
 
         x = self.fpn(x)
-        #for i in range(6):
-           # print(x[f"{i}"].shape)
+        for i in range(6):
+           print("fpn output: ", x[f"{i}"].shape)
 
         features.extend(x.values() )
         out_features = tuple(features)
@@ -123,10 +123,18 @@ class ResnetWithFPN(torch.nn.Module):
         #         f"Expected shape: {expected_shape}, got: {feature.items().shape[1:]} at output IDX: {idx}"
         # assert len(out_features) == len(self.output_feature_shape),\
         #     f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
-        
+        exit()
         #print(out_features)
         return tuple(x.values())
 
+    def reshape_transform(x):
 
+        target_size = x['feat3'].size()[-2 : ]
+        activations = []
+        for key, value in x.items():
+            activations.append(torch.nn.functional.interpolate(torch.abs(value), target_size, mode='bilinear'))
+        activations = torch.cat(activations, axis=1)
+
+        return activations
 
 # Now we can build our model!
