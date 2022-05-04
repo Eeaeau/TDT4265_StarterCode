@@ -355,6 +355,20 @@ def aspectRatioPlot(df, show_fig=False):
         plt.savefig('./dataset_exploration/aspectRatio_kde.png', dpi=200)
         plt.savefig('./dataset_exploration/aspectRatio_kde.eps', dpi=200)
 
+def aspectRatioPlot_hue(df, hue, show_fig=False):
+    
+    #g = sns.displot(x=df['height']/df['width'],data=df, hue=hue,col='dataset',kde=True)
+    g = sns.displot(x=df['height']/df['width']/8,data=df, hue=hue,col='dataset',kde=True)
+    g.set(xlabel='Normalized aspect ratio')
+    
+    #plt.title('Frequency of aspect ratio')
+    plt.tight_layout()
+    if show_fig:
+        plt.show()
+    else:
+        plt.savefig('./dataset_exploration/aspectRatio_perclass_div8_kde.png', dpi=200)
+        plt.savefig('./dataset_exploration/aspectRatio_perclass_div8_kde.eps', dpi=200)
+
 def plotOverlapPerFrame(dataloader_train, dataloader_val, cfg, show_fig=False):
     t, v = numOverlapped(dataloader_train, dataloader_val,cfg)
     df_t = pd.DataFrame.from_dict({'values':t, 'frames':np.arange(len(t))})
@@ -395,9 +409,10 @@ def main():
     #w_t, h_t = widthHight(dataloader_train)
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
-    plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
+    #plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
     
     df = createDataframe(dataloader_train, dataloader_val, labels)
+    aspectRatioPlot_hue(df, 'type', show_fig=False)
     #plotCenters(df)
     #aspectRatioPlot(df)
     #print(df.head())
