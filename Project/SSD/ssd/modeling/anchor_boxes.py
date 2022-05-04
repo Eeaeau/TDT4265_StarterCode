@@ -29,7 +29,7 @@ class AnchorBoxes(object):
         self.scale_size_variance = scale_size_variance
         self.num_boxes_per_fmap = [2 + 2*len(ratio) for ratio in aspect_ratios]
         # Calculation method slightly different from paper
-
+        print(aspect_ratios)
         anchors = []
         # size of feature and number of feature
         for fidx, [fH, fW] in enumerate(feature_sizes):
