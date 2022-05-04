@@ -241,7 +241,7 @@ class RandomAutocontrast(torch.nn.Module):
 
     @torch.no_grad()
     def forward(self, batch):
-        augmenter  = torchvision.transforms.RandomAutocontrast()
+        augmenter  = torchvision.transforms.RandomAutocontrast(p=0.25)
         batch["image"] = augmenter(batch["image"])
         return batch
 

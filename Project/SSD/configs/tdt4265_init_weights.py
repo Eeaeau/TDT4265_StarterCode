@@ -19,6 +19,8 @@ from tops.config import LazyCall as L
 from ssd.modeling.retinanet import RetinaNet
 from ssd.modeling import AnchorBoxes
 
+train.epochs = 100
+
 # anchors.aspect_ratios = [ [2, 3] , [2, 3], [2, 3], [2, 3], [2, 3], [2, 3] ]
 # # anchors.aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
 
