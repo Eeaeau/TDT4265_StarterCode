@@ -67,59 +67,31 @@ class RetinaNet(nn.Module):
                         nn.init.xavier_uniform_(param)
 
         else:
-            ##Model1: start
-            ##Model2: start
             for layer in self.classification_heads:
-                
+
                 if hasattr(layer, "weight"):
                         #nn.init.normal_(layer.weight.data, 0, 0.01)
                         nn.init.kaiming_uniform_(layer.weight.data, mode='fan_in', nonlinearity='relu')
-                        #print("layer weight:", layer.weight.)
-                        
+
                 if hasattr(layer, "bias"):
                         nn.init.zeros_(layer.bias.data)
-                
+
             for layer in self.regression_heads:
-                
+
                 if hasattr(layer, "weight"):
                         nn.init.kaiming_uniform_(layer.weight.data, mode='fan_in', nonlinearity='relu')
-                        
+
                 if hasattr(layer, "bias"):
                         nn.init.zeros_(layer.bias.data)
-                
-            #nn.init.constant_(self.classification_heads[-1].bias.data, 0)
-            #nn.init.constant_(self.regression_heads[-1].bias.data, 0)     
+
             p = 0.99
             class_bias = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
-            print("layers len:", len(layers))
 
-            for layer in layers:
-                for i, param in enumerate(layer.parameters()):
-                    # Sorting out the weights
-                    # print(param.shape)
-                    # if param.dim() > 1:
-                    if hasattr(layer, "weight"):
-                        nn.init.normal_(param, 0, 0.01)
-                        # print("layer weight:", layer.weight.shape)
-                        # print("layer bias:", layer.bias)
-                    if hasattr(layer, "bias"):
-                        nn.init.zeros_(layer.bias)
-                        # layer.bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
-                        #nn.init.constant_(layer.bias.data[:self.n_anchors], class_bias)#new method
             nn.init.constant_(self.classification_heads[-1].bias.data[:self.n_anchors], class_bias)
-            pi = 0.01
-            #end_layer_bias = torch.log(torch.tensor((1-pi)/(pi)))
-            # nn.init.constant_(layers[-1].bias.data[self.n_anchors:], end_layer_bias)
-            #nn.init.constant_(self.regression_heads[-1].bias.data[self.n_anchors:], end_layer_bias)
-
             for param in self.classification_heads[-1].parameters():
                     if param.dim() > 1:
                         nn.init.xavier_uniform_(param)
-                        # nn.init.xavier_uniform_(self.classification_heads[-1].bias.data[self.n_anchors:], end_layer_bias)
 
-            # layers[-2].bias.data[:self.n_anchors] = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
-            # nn.init.constant_(layer[-2].bias.data[:self.n_anchors], torch.log(torch.tensor(p*((self.num_classes-1)/(1-p)))))
-            # exit()
 
     def regress_boxes(self, features):
         locations = []
