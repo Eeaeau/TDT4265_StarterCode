@@ -369,6 +369,21 @@ def aspectRatioPlot_hue(df, hue, show_fig=False):
         plt.savefig('./dataset_exploration/aspectRatio_perclass_div8_kde.png', dpi=200)
         plt.savefig('./dataset_exploration/aspectRatio_perclass_div8_kde.eps', dpi=200)
 
+def aspect_ratio_box(df, hue='dataset', show_fig=False):
+
+    g = sns.boxplot(x=df['width']/df['height']*8, y="type", data=df, hue=hue, showfliers=False)
+
+    g.set(xlabel='Aspect ratio')
+
+    plt.title('Spread of aspect ratio')
+    plt.tight_layout()
+    if show_fig:
+        plt.show()
+    else:
+        plt.savefig('./dataset_exploration/aspectRatio_perclass_spread.png', dpi=200)
+        plt.savefig('./dataset_exploration/aspectRatio_perclass_spread.eps', dpi=200)
+        plt.savefig('./dataset_exploration/aspectRatio_perclass_spread.svg', dpi=200)
+
 def heightPlot_hue(df, hue, show_fig=False):
 
     #g = sns.displot(x=df['height']/df['width'],data=df, hue=hue,col='dataset',kde=True)
@@ -448,7 +463,7 @@ def main():
     #plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
 
     df = createDataframe(dataloader_train, dataloader_val, labels)
-    widthPlot_hue(df, 'type', show_fig=False)
+    aspect_ratio_box(df, show_fig=False)
     #plotCenters(df)
     #aspectRatioPlot(df)
     #print(df.head())
