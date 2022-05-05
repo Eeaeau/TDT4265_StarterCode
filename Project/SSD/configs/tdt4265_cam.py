@@ -1,3 +1,4 @@
+import imp
 from .tdt4265_fpn import (
     train,
     optimizer,
@@ -16,5 +17,13 @@ from .tdt4265_fpn import (
 
 from tops.config import LazyCall as L
 from ssd.modeling import FocalLoss
+from ssd.modeling.retinanetOutputWrapper import RetinaNetOutputWrapper
+import torch
 
+# print(model)
 
+x = torch.randn(1, 3, 128, 1024)
+wrappermodel = RetinaNetOutputWrapper(model)
+print(wrappermodel.keys())
+
+# wrappermodel(x)
