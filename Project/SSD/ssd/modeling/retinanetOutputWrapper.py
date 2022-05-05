@@ -12,5 +12,5 @@ class RetinaNetOutputWrapper(torch.nn.Module):
         # print("#############################################################")
 
     def forward(self, x):
-        return self.model(x)[0][0]
+        return self.model(x)
         # exit()
