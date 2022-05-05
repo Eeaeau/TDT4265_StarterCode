@@ -93,7 +93,8 @@ class ResnetWithFPN(torch.nn.Module):
         # self.out_channels = [256, 256, 256, 256, 64, 64]
         print("############################################################")
     def forward(self, x):
-
+        print("x: ", x.shape)
+        exit()
         features = []
         x = self.body(x)
         #print(x["3"].shape)
@@ -127,6 +128,9 @@ class ResnetWithFPN(torch.nn.Module):
         #     f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         # exit()
         #print(out_features)
+
+        # print(tuple(x.values())[0].shape)
+        # exit()
         return tuple(x.values())
 
     # def reshape_transform(x, model):
