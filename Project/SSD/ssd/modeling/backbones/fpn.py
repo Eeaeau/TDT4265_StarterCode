@@ -93,8 +93,8 @@ class ResnetWithFPN(torch.nn.Module):
         # self.out_channels = [256, 256, 256, 256, 64, 64]
         print("############################################################")
     def forward(self, x):
-        print("x: ", x.shape)
-        exit()
+        # print("x: ", x.shape)
+        # exit()
         features = []
         x = self.body(x)
         #print(x["3"].shape)
