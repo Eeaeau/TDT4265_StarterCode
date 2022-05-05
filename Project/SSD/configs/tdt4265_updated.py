@@ -1,5 +1,5 @@
 # Import everything from the old dataset and only change the dataset folder.
-from .tdt4265 import (
+from .tdt4265_init_weights import (
     train,
     optimizer,
     schedulers,
@@ -11,7 +11,8 @@ from .tdt4265 import (
     train_cpu_transform,
     val_cpu_transform,
     gpu_transform,
-    label_map
+    label_map,
+    anchors,
 )
 from .utils import get_dataset_dir
 data_train.dataset.img_folder = get_dataset_dir("tdt4265_2022_updated")
