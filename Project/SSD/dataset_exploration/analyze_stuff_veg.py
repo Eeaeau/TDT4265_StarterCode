@@ -1,7 +1,7 @@
 from audioop import mul
 from operator import index
 from matplotlib import collections
-from sympy import Point, true
+# from sympy import Point, true
 from tops.config import instantiate, LazyConfig
 from ssd import utils
 from tqdm import tqdm
@@ -76,7 +76,7 @@ def histogramLabelDist(dataloader,labels,save_fig=False):
     count_labels = []
     for batch in tqdm(dataloader):
         count_labels += batch['labels'].tolist()[0]
-    
+
     x_values = np.arange(0, len(labels), 1)
     sns.histplot(data=count_labels, kde=False,bins=len(labels),discrete=True)
     plt.xticks(x_values,labels,rotation=40)
@@ -91,17 +91,17 @@ def histogramNumLabel(dataloader,save_fig=False):
     count_labels = []
     for batch in tqdm(dataloader):
         count_labels.append(len(batch['labels'].tolist()[0]))
-        
+
     sns.histplot(data=count_labels, kde=False,discrete=True)
     plt.xlabel('Number of labels')
-    
+
     if save_fig:
         plt.savefig('./dataset_exploration/images/data_num_label_train_sns.png', bbox_inches = "tight",dpi=200)
     plt.show()
 
 def imagesAbove25Labels(dataloader,cfg,save_folder):
     #create some more in seaborn mb
- 
+
     i = 0
     for batch in tqdm(dataloader):
         if len(batch['labels'].tolist()[0])>25:
@@ -112,7 +112,7 @@ def imagesAbove25Labels(dataloader,cfg,save_folder):
 
 def imagesUnderXLabels(X,dataloader,cfg,save_folder):
     #create some more in seaborn mb
- 
+
     i = 0
     for batch in tqdm(dataloader):
         if len(batch['labels'].tolist()[0])<X:
@@ -148,12 +148,12 @@ def numOverlapped(dataloader_train,dataloader_val,cfg,viz=False):
             cv2.imshow('window',viz_image[:, :, ::-1])
             # Waits for a keystroke
 
-            cv2.waitKey(0) 
+            cv2.waitKey(0)
 
             cv2.destroyWindow("window")
 
         for i_t, box_t in enumerate(batch_t['boxes'].squeeze().numpy()):
-            
+
             for idx, x in enumerate(batch_t['boxes'].squeeze().numpy()):
                 if idx == i_t:
                     continue
@@ -166,14 +166,14 @@ def numOverlapped(dataloader_train,dataloader_val,cfg,viz=False):
                     overlapped += 1
         num_overlapped_per_frame_train.append(overlapped)
 
-        
+
 
 
     for idx_v, batch_v in enumerate(tqdm(dataloader_val)):
         overlapped = 0
-        
+
         for i_v, box_v in enumerate(batch_v['boxes'].squeeze().numpy()):
-            
+
             for idxv, x_v in enumerate(batch_v['boxes'].squeeze().numpy()):
                 if idxv == i_v:
                     continue
@@ -185,9 +185,9 @@ def numOverlapped(dataloader_train,dataloader_val,cfg,viz=False):
                 if not (x1v > x2v or y1v > y2v): #just checking that it exist an overlap
                     overlapped += 1
         num_overlapped_per_frame_val.append(overlapped)
-    
+
     return num_overlapped_per_frame_train, num_overlapped_per_frame_val
-            
+
 
 
 def boxSizes(dataloader, save_fig=False):
@@ -198,7 +198,7 @@ def boxSizes(dataloader, save_fig=False):
             box_sizes.append(calcArea(x))
     print(max(box_sizes))
     xaxis = np.arange(0,len(box_sizes),1)
-    
+
     sns.scatterplot(x=xaxis,y=box_sizes)
     #sns.histplot(data=box_sizes, kde=False,discrete=True)
     plt.ylabel('Size of boxes')
@@ -239,17 +239,17 @@ def createDataframe(dataloader_train, dataloader_val, labels):
             data_dict['center_x'].append(x)
             data_dict['center_y'].append(y)
     df = pd.DataFrame.from_dict(data_dict)
-    
+
     return df
 def sizeDistribution(train_width,train_height, val_width, val_height ): #sjit function
     #print(type(train_height))
-    
+
     df = pd.DataFrame()
     df['train_width'] = pd.Series(train_width)
     df['train_height'] = pd.Series(train_height)
     df['val_width'] = pd.Series(val_width)
     df['val_height'] = pd.Series(val_height)
-    
+
     #df = pd.DataFrame(np.array([train_width,train_height, val_width, val_height]), columns=['train_width','train_height', 'val_width', 'val_height' ])
     #df_train = pd.DataFrame(np.array([train_width,train_height]), columns=['train_width','train_height' ])
     #df_val = pd.DataFrame(np.array([val_width, val_height]), columns=[ 'val_width', 'val_height' ])
@@ -271,7 +271,7 @@ def sizeDistribution(train_width,train_height, val_width, val_height ): #sjit fu
     plt.boxplot(data_h, labels=xlabH, showfliers=False)
     plt.subplot(212)
     plt.boxplot(data_w, labels=xlabW, showfliers=False)
-    
+
 
     plt.savefig('boxplot_sides_split.png', dpi=200)
     plt.show()
@@ -339,13 +339,13 @@ def plotCenters(df, show_fig=False):
     #plt.title('Position of the center of bounding boxes in a normalized image')
     if show_fig:
         plt.show()
-        
+
     else:
         plt.savefig('./dataset_exploration/position_ofBox_frame_sub.png', dpi=200)
         plt.savefig('./dataset_exploration/position_ofBox_frame_sub.eps', dpi=200)
-    
+
 def aspectRatioPlot(df, show_fig=False):
-    
+
     sns.displot(x=df['height']/df['width'],data=df, hue='dataset',stat='frequency',kde=True)
     plt.title('Frequency of aspect ratio')
     plt.tight_layout()
@@ -356,11 +356,11 @@ def aspectRatioPlot(df, show_fig=False):
         plt.savefig('./dataset_exploration/aspectRatio_kde.eps', dpi=200)
 
 def aspectRatioPlot_hue(df, hue, show_fig=False):
-    
+
     #g = sns.displot(x=df['height']/df['width'],data=df, hue=hue,col='dataset',kde=True)
-    g = sns.displot(x=df['height']/df['width']/8,data=df, hue=hue,col='dataset',kde=True)
+    g = sns.displot(x=df['height']/df['width']/8,data=df, hue=hue,col='dataset', kde=True)
     g.set(xlabel='Normalized aspect ratio')
-    
+
     #plt.title('Frequency of aspect ratio')
     plt.tight_layout()
     if show_fig:
@@ -369,12 +369,48 @@ def aspectRatioPlot_hue(df, hue, show_fig=False):
         plt.savefig('./dataset_exploration/aspectRatio_perclass_div8_kde.png', dpi=200)
         plt.savefig('./dataset_exploration/aspectRatio_perclass_div8_kde.eps', dpi=200)
 
+def heightPlot_hue(df, hue, show_fig=False):
+
+    #g = sns.displot(x=df['height']/df['width'],data=df, hue=hue,col='dataset',kde=True)
+    g = sns.displot(x=df['height']*128, data=df, hue=hue,col='dataset', kde=True)
+    # g.set(xlabel='Normalized aspect ratio')
+
+    #plt.title('Frequency of aspect ratio')
+    plt.tight_layout()
+
+    plt.xlim(0, 160)
+
+    if show_fig:
+        plt.show()
+    else:
+        plt.savefig('./dataset_exploration/height_px_perclass_kde.png', dpi=200)
+        plt.savefig('./dataset_exploration/height_px_perclass_kde.eps', dpi=200)
+        plt.show()
+
+def widthPlot_hue(df, hue, show_fig=False):
+
+    #g = sns.displot(x=df['height']/df['width'],data=df, hue=hue,col='dataset',kde=True)
+    g = sns.displot(x=df['width']*1024, data=df, hue=hue,col='dataset', kde=True)
+    # g.set(xlabel='Normalized aspect ratio')
+
+    #plt.title('Frequency of aspect ratio')
+    plt.tight_layout()
+
+    plt.xlim(0, 160)
+
+    if show_fig:
+        plt.show()
+    else:
+        plt.savefig('./dataset_exploration/width_px_perclass_kde.png', dpi=200)
+        plt.savefig('./dataset_exploration/width_px_perclass_kde.eps', dpi=200)
+        plt.show()
+
 def plotOverlapPerFrame(dataloader_train, dataloader_val, cfg, show_fig=False):
     t, v = numOverlapped(dataloader_train, dataloader_val,cfg)
     df_t = pd.DataFrame.from_dict({'values':t, 'frames':np.arange(len(t))})
     df_v = pd.DataFrame.from_dict({'values':v, 'frames':np.arange(len(v))})
     fig, axes = plt.subplots(2, 1)
-    
+
     fig.suptitle('Number of overlapping boxes in train and val dataset')
     sns.lineplot(x='frames', y='values', data=df_t, ax=axes[0], ci='sd',estimator='median',err_style="band")
     #axes[0].hist(t, bins=len(t))
@@ -393,7 +429,7 @@ def main():
     config_path = "configs/tdt4265_updated_res34.py"
     cfg = get_config(config_path)
     dataset_to_analyze = "val"  # or "val"
-    
+
     print("Label map is:", cfg.label_map)
     #print(cfg.label_map)
     labels = omegaDictTolist(cfg.label_map)
@@ -410,9 +446,9 @@ def main():
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
     #plotOverlapPerFrame(dataloader_train,dataloader_val,cfg)
-    
+
     df = createDataframe(dataloader_train, dataloader_val, labels)
-    aspectRatioPlot_hue(df, 'type', show_fig=False)
+    widthPlot_hue(df, 'type', show_fig=False)
     #plotCenters(df)
     #aspectRatioPlot(df)
     #print(df.head())
