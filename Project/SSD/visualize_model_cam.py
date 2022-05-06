@@ -133,20 +133,20 @@ def renormalize_cam_in_bounding_boxes(boxes, image_float_np, grayscale_cam):
     # print("labels: ", labels)
     renormalized_cam = np.zeros(grayscale_cam.shape, dtype=np.float32)
     # print("renormalized_cam.shape:", renormalized_cam.shape)
-    print("grayscale_cam:", grayscale_cam)
+    # print("grayscale_cam:", grayscale_cam)
     images = []
-    print("renormalize_cam_in_bounding_boxes boxes:", type(boxes))
+    # print("renormalize_cam_in_bounding_boxes boxes:", type(boxes))
     boxes_int = np.rint(boxes)
     for box in boxes_int:
         x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
-        print("renormalize_cam_in_bounding_boxes x1, y1, x2, y2:", x1, y1, x2, y2)
+        # print("renormalize_cam_in_bounding_boxes x1, y1, x2, y2:", x1, y1, x2, y2)
         img = renormalized_cam * 0
         img[y1:y2, x1:x2] = scale_cam_image(grayscale_cam[y1:y2, x1:x2].copy())
         images.append(img)
 
     renormalized_cam = np.max(np.float32(images), axis = 0)
     renormalized_cam = scale_cam_image(renormalized_cam)
-    print("renormalized_cam:", renormalized_cam, "renormalized_cam.shape:", renormalized_cam.shape)
+    # print("renormalized_cam:", renormalized_cam, "renormalized_cam.shape:", renormalized_cam.shape)
 
     eigencam_image_renormalized = show_cam_on_image(image_float_np, renormalized_cam, use_rgb=True)
     # print("class_name_map:", class_name_map, type(class_name_map))
@@ -157,7 +157,7 @@ def renormalize_cam_in_bounding_boxes(boxes, image_float_np, grayscale_cam):
     # image_with_bounding_boxes  = draw_boxes(cam_image, samble_boxes, sample_labels, class_name_map=cfg.label_map)
 
 
-def get_cam(model, input_tensor, labels, boxes, renorm=False):
+def get_cam_image(model, input_tensor, labels, boxes, renorm=False):
     """
         Computes the CAM for a given image.
 
@@ -182,15 +182,15 @@ def get_cam(model, input_tensor, labels, boxes, renorm=False):
     cam.uses_gradients=False
 
     grayscale_cam = cam(input_tensor, targets=targets)
-    print("grayscale_cam:", grayscale_cam.shape)
+    # print("grayscale_cam:", grayscale_cam.shape)
     grayscale_cam = grayscale_cam[0, :]
     grayscale_cam = grayscale_cam / np.max(grayscale_cam)
-    print("grayscale_cam:", grayscale_cam.shape)
+    # print("grayscale_cam:", grayscale_cam.shape)
 
     image = input_tensor[0]
     image_float_np = image.permute(1, 2, 0).cpu().numpy()
 
-    if renorm:
+    if not renorm:
         cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
     else:
         cam_image = renormalize_cam_in_bounding_boxes(boxes, image_float_np, grayscale_cam)
@@ -280,14 +280,14 @@ def visualize_model_cam(config_path: Path):
 
     ################### draw image with bounding boxes #########################
 
-    cam_image = get_cam(model, input_tensor, sample_labels, sample_boxes, renorm=False)
+    cam_image = get_cam_image(model, input_tensor, sample_labels, sample_boxes, renorm=False)
 
     plt.subplot(2, 1, 1)
     image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.imshow(image_with_bounding_boxes)
     # plt.show()
 
-    renorm = get_cam(model, input_tensor, sample_labels, sample_boxes, renorm=True)
+    renorm = get_cam_image(model, input_tensor, sample_labels, sample_boxes, renorm=True)
 
     # renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes,
     #     image_float_np = image_float_np,
