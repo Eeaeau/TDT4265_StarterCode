@@ -244,20 +244,27 @@ def visualize_model_cam(config_path: Path):
     cam.uses_gradients=False
 
     grayscale_cam = cam(input_tensor, targets=targets)
+    print("grayscale_cam:", grayscale_cam.shape)
     grayscale_cam = grayscale_cam[0, :]
+    grayscale_cam = grayscale_cam / np.max(grayscale_cam)
     print("grayscale_cam:", grayscale_cam.shape)
 
 
     ################### draw image with bounding boxes #########################
     cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
 
+    plt.subplot(2, 1, 1)
     image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.imshow(image_with_bounding_boxes )
-    plt.show()
+    # plt.show()
 
-    renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes, labels = sample_labels, class_name_map = cfg.label_map, image_float_np = image_float_np, grayscale_cam = grayscale_cam)
-    # renorm = renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float_np, grayscale_cam)
-    # print(renorm)
+    renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes,
+        labels = sample_labels,
+        class_name_map = cfg.label_map,
+        image_float_np = image_float_np,
+        grayscale_cam = grayscale_cam)
+
+    plt.subplot(2, 1, 2)
     plt.imshow(renorm)
     plt.show()
     # Image.fromarray()
