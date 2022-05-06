@@ -1,3 +1,4 @@
+from statistics import mode
 import sys, os
 sys.path.append(os.path.dirname(os.getcwd())) # Include ../SSD in path
 import numpy as np
@@ -111,11 +112,15 @@ def draw_image(cfg, sample, image_mean, image_std):
     plt.imshow(im)
     plt.show()
 
-def reshape_transform(x):
-    #print(x)
-    target_size = x[2].size()[-2 : ]
-    #print("hei:OOOOOOOOOOO")
-    #print(target_size)
+def retinanet_reshape_transform(x):
+    print("x: ", x)
+    print("x keys: ", x.keys())
+    # target_size = x[2].size()[-2 : ]
+    target_size = x["0"].size()[-2 : ]
+    print(target_size)
+    target_size = target_size[-2 : ]
+    print(target_size)
+
     activations = []
     for value in x:
         activations.append(torch.nn.functional.interpolate(torch.abs(value), target_size, mode='bilinear'))
@@ -141,12 +146,13 @@ def visualize_model_cam(config_path: Path):
     tops.set_AMP(cfg.train.amp)
     tops.set_seed(cfg.train.seed)
 
-    model = tops.to_cuda(instantiate(cfg.model))
+    # model = tops.to_cuda(instantiate(cfg.model))
+    model = get_trained_model(cfg)
     # cfg = get_config(config_path)
     # model = get_trained_model(cfg)
 
     wrapped_model = RetinaNetOutputWrapper(model=model)
-    wrapped_model = wrapped_model.eval().to(device)
+    wrapped_model = wrapped_model.model.eval().to(device)
     # print(wrapped_model)
 
     # Get your input
@@ -177,12 +183,15 @@ def visualize_model_cam(config_path: Path):
 
     boxes, classes, labels, indices = predict(input_tensor, wrapped_model, 0.1, class_names)
 
+    target_layers = [wrapped_model.feature_extractor.fpn]
+
+    print("target_layers:", target_layers)
+
     targets = [FasterRCNNBoxScoreTarget(labels=labels, bounding_boxes=boxes)]
-    target_layers = [wrapped_model.feature_extractor]
     cam = EigenCAM(model,
                target_layers,
                use_cuda=torch.cuda.is_available(),
-               reshape_transform=reshape_transform)
+               reshape_transform=retinanet_reshape_transform)
     cam.uses_gradients=False
 
     grayscale_cam = cam(input_tensor, targets=targets)
@@ -192,10 +201,13 @@ def visualize_model_cam(config_path: Path):
     # Take the first image in the batch:
     image = (sample["image"] * image_std + image_mean)[0]
     # image = (image*255).byte()[0]
-    # image_float_np = image.permute(1, 2, 0).cpu().numpy()
-    image_float_np = image.cpu().numpy().reshape((128,1024,3) )
+    image_float_np = image.permute(1, 2, 0).cpu().numpy()
+    # image_float_np = image.cpu().numpy().reshape( (128,1024,3) )
     # image_float_np = image.cpu().numpy()
     print(image_float_np.shape)
+    # plt.imshow(image_float_np)
+    # plt.show()
+
     cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
     plt.imshow(cam_image)
     plt.show()
