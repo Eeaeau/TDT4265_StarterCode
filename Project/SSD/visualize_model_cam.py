@@ -157,8 +157,45 @@ def renormalize_cam_in_bounding_boxes(boxes, image_float_np, grayscale_cam):
     # image_with_bounding_boxes  = draw_boxes(cam_image, samble_boxes, sample_labels, class_name_map=cfg.label_map)
 
 
-def get_cam(model, image, cfg):
-    return
+def get_cam(model, input_tensor, labels, boxes, renorm=False):
+    """
+        Computes the CAM for a given image.
+
+        Args:
+            model: The model to use.
+            input_tensor: The input tensor.
+            labels: The labels of the image.
+            boxes: The bounding boxes of the image.
+            renorm: Whether to renormalize the CAM.
+    """
+    wrapped_model = RetinaNetOutputWrapper(model=model)
+    wrapped_model = wrapped_model.eval().to(tops.get_device())
+
+    target_layers = [wrapped_model.feature_extractor]
+
+    ############################# get activations #############################
+    targets = [FasterRCNNBoxScoreTarget(labels=labels, bounding_boxes=boxes)]
+    cam = EigenCAM(model,
+               target_layers,
+               use_cuda=torch.cuda.is_available(),
+               reshape_transform=retinanet_reshape_transform)
+    cam.uses_gradients=False
+
+    grayscale_cam = cam(input_tensor, targets=targets)
+    print("grayscale_cam:", grayscale_cam.shape)
+    grayscale_cam = grayscale_cam[0, :]
+    grayscale_cam = grayscale_cam / np.max(grayscale_cam)
+    print("grayscale_cam:", grayscale_cam.shape)
+
+    image = input_tensor[0]
+    image_float_np = image.permute(1, 2, 0).cpu().numpy()
+
+    if renorm:
+        cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
+    else:
+        cam_image = renormalize_cam_in_bounding_boxes(boxes, image_float_np, grayscale_cam)
+
+    return cam_image
 
 
 @click.command()
@@ -182,8 +219,6 @@ def visualize_model_cam(config_path: Path):
 
     model = get_trained_model(cfg)
 
-    wrapped_model = RetinaNetOutputWrapper(model=model)
-    wrapped_model = wrapped_model.eval().to(device)
     # print(wrapped_model)
 
     # Get your input
@@ -196,7 +231,7 @@ def visualize_model_cam(config_path: Path):
     sample, image_mean, image_std = get_sample_data(cfg)
 
     input_tensor = (sample["image"] * image_std + image_mean)
-    input_tensor = input_tensor.to(device)
+    # input_tensor = input_tensor.to(device)
     # print("input_tensor shape:", input_tensor.shape)
     # print("input_tensor:", input_tensor)
 
@@ -209,7 +244,7 @@ def visualize_model_cam(config_path: Path):
     # This will help us create a different color for each class
     COLORS = np.random.uniform(0, 255, size=(len(class_names), 3))
 
-    image = (sample["image"] * image_std + image_mean)[0]
+    image = input_tensor[0]
     image_float_np = image.permute(1, 2, 0).cpu().numpy()
     print(image_float_np.shape)
 
@@ -221,39 +256,42 @@ def visualize_model_cam(config_path: Path):
     sample_labels = sample["labels"][0].cpu().numpy().tolist()
 
     sample_classes = [class_names[i] for i in sample_labels]
-    print("samble_boxes:", type(sample_boxes), sample_boxes.shape)
-    print("sample_labels:", type(sample_labels), sample_labels)
-    print("sample_classes:", type(sample_classes), sample_classes)
+    # print("samble_boxes:", type(sample_boxes), sample_boxes.shape)
+    # print("sample_labels:", type(sample_labels), sample_labels)
+    # print("sample_classes:", type(sample_classes), sample_classes)
 
-    target_layers = [wrapped_model.feature_extractor]
-
+    # target_layers = [wrapped_model.feature_extractor]
 
     ############################# get activations #############################
-    targets = [FasterRCNNBoxScoreTarget(labels=sample_labels, bounding_boxes=sample_boxes)]
-    cam = EigenCAM(model,
-               target_layers,
-               use_cuda=torch.cuda.is_available(),
-               reshape_transform=retinanet_reshape_transform)
-    cam.uses_gradients=False
+    # targets = [FasterRCNNBoxScoreTarget(labels=sample_labels, bounding_boxes=sample_boxes)]
+    # cam = EigenCAM(model,
+    #            target_layers,
+    #            use_cuda=torch.cuda.is_available(),
+    #            reshape_transform=retinanet_reshape_transform)
+    # cam.uses_gradients=False
 
-    grayscale_cam = cam(input_tensor, targets=targets)
-    print("grayscale_cam:", grayscale_cam.shape)
-    grayscale_cam = grayscale_cam[0, :]
-    grayscale_cam = grayscale_cam / np.max(grayscale_cam)
-    print("grayscale_cam:", grayscale_cam.shape)
+    # grayscale_cam = cam(input_tensor, targets=targets)
+    # print("grayscale_cam:", grayscale_cam.shape)
+    # grayscale_cam = grayscale_cam[0, :]
+    # grayscale_cam = grayscale_cam / np.max(grayscale_cam)
+    # print("grayscale_cam:", grayscale_cam.shape)
+
 
 
     ################### draw image with bounding boxes #########################
-    cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
+
+    cam_image = get_cam(model, input_tensor, sample_labels, sample_boxes, renorm=False)
 
     plt.subplot(2, 1, 1)
     image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.imshow(image_with_bounding_boxes)
     # plt.show()
 
-    renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes,
-        image_float_np = image_float_np,
-        grayscale_cam = grayscale_cam)
+    renorm = get_cam(model, input_tensor, sample_labels, sample_boxes, renorm=True)
+
+    # renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes,
+    #     image_float_np = image_float_np,
+    #     grayscale_cam = grayscale_cam)
 
     image_with_bounding_boxes  = draw_boxes(renorm, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.subplot(2, 1, 2)
