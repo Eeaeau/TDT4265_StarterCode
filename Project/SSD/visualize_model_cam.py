@@ -35,6 +35,7 @@ from omegaconf import OmegaConf
 
 from pytorch_grad_cam.utils.image import show_cam_on_image, preprocess_image
 from pytorch_grad_cam import GradCAM, EigenCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image, scale_accross_batch_and_channels, scale_cam_image
 
 torch.backends.cudnn.benchmark = True
 
@@ -64,7 +65,6 @@ def predict(input_tensor, model, detection_threshold, class_names):
     return boxes, classes, labels, indices
 
 def get_sample_data(cfg, dataset_to_visualize = "train"):
-
 
     cfg.train.batch_size = 1
     if dataset_to_visualize == "train":
@@ -113,17 +113,10 @@ def draw_image(cfg, sample, image_mean, image_std):
     plt.show()
 
 def retinanet_reshape_transform(x):
-
-    # print("x: ", x)
-    # print("x keys: ", x.keys())
-    # x = list(x.values())
-    # print("0:", target_size["0"])
-    # target_size = x[2].size()[-2 : ]
-
-    quality_lvl = 1 # lower level is higher quality
-    target_size = x[quality_lvl].size()[-2 : ]
+    quality_lvl = 0 # lower level is higher quality
+    target_size = x[quality_lvl].size()
     target_size = target_size[-2 : ]
-    print(target_size)
+    print("target_size: ", target_size)
 
     activations = []
     for value in x:
@@ -131,6 +124,34 @@ def retinanet_reshape_transform(x):
         activations.append(torch.nn.functional.interpolate(torch.abs(value), target_size, mode='bilinear'))
     activations = torch.cat(activations, axis=1)
     return activations
+
+def renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float_np, grayscale_cam):
+    """Normalize the CAM to be in the range [0, 1]
+    inside every bounding boxes, and zero outside of the bounding boxes. """
+
+    # labels = [str(label) for label in labels]
+
+    renormalized_cam = np.zeros(grayscale_cam.shape, dtype=np.float32)
+    # print("renormalized_cam.shape:", renormalized_cam.shape)
+    print("grayscale_cam:", grayscale_cam)
+    images = []
+    print("renormalize_cam_in_bounding_boxes boxes:", type(boxes))
+    boxes_int = np.rint(boxes)
+    for box in boxes_int:
+        x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+        print("renormalize_cam_in_bounding_boxes x1, y1, x2, y2:", x1, y1, x2, y2)
+        img = renormalized_cam * 0
+        img[y1:y2, x1:x2] = scale_cam_image(grayscale_cam[y1:y2, x1:x2].copy())
+        images.append(img)
+
+    renormalized_cam = np.max(np.float32(images), axis = 0)
+    renormalized_cam = scale_cam_image(renormalized_cam)
+    eigencam_image_renormalized = show_cam_on_image(image_float_np, renormalized_cam, use_rgb=True)
+    image_with_bounding_boxes = draw_boxes(eigencam_image_renormalized, boxes, labels, class_name_map)
+    # image_with_bounding_boxes  = draw_boxes(cam_image, samble_boxes, sample_labels, class_name_map=cfg.label_map)
+
+    return image_with_bounding_boxes
+
 
 
 @click.command()
@@ -147,9 +168,11 @@ def visualize_model_cam(config_path: Path):
     cfg = utils.load_config(config_path)
     print("cfg:", cfg.keys())
 
-    tops.init(cfg.output_dir)
-    tops.set_AMP(cfg.train.amp)
-    tops.set_seed(cfg.train.seed)
+    ############################# get model #####################################
+
+    # tops.init(cfg.output_dir)
+    # tops.set_AMP(cfg.train.amp)
+    # tops.set_seed(cfg.train.seed)
 
     # model = tops.to_cuda(instantiate(cfg.model))
     model = get_trained_model(cfg)
@@ -169,30 +192,49 @@ def visualize_model_cam(config_path: Path):
     # # Add a batch dimension:
     # input_tensor = input_tensor.unsqueeze(0)
 
-    # get sample data
+    ############################# get sample data #############################
     sample, image_mean, image_std = get_sample_data(cfg)
 
     input_tensor = (sample["image"] * image_std + image_mean)
     input_tensor = input_tensor.to(device)
-    print("input_tensor shape:", input_tensor.shape)
-    print("input_tensor:", input_tensor)
+    # print("input_tensor shape:", input_tensor.shape)
+    # print("input_tensor:", input_tensor)
 
 
-    # draw image
+    ############################# get preds #############################
     # draw_image(cfg, sample, image_mean, image_std)
     # labels = sample["labels"][0].cpu().numpy().tolist()
     class_names = list(cfg["label_map"].values())
-    print("label_map:", class_names)
+    print("class_names:", class_names)
     # This will help us create a different color for each class
     COLORS = np.random.uniform(0, 255, size=(len(class_names), 3))
 
-    boxes, classes, labels, indices = predict(input_tensor, wrapped_model, 0.1, class_names)
+    # boxes, classes, labels, indices = predict(input_tensor, wrapped_model, 0.1, class_names)
+    # print("boxes:", boxes)
+    # print("classes:", classes)
+    # print("labels:", labels)
+
+    image = (sample["image"] * image_std + image_mean)[0]
+    image_float_np = image.permute(1, 2, 0).cpu().numpy()
+    print(image_float_np.shape)
+
+    sample_boxes = sample["boxes"][0]
+    sample_boxes[:, [0, 2]] *= image.shape[-1]
+    sample_boxes[:, [1, 3]] *= image.shape[-2]
+    sample_boxes = sample_boxes.cpu().numpy()
+
+    sample_labels = sample["labels"][0].cpu().numpy().tolist()
+
+    sample_classes = [class_names[i] for i in sample_labels]
+    print("samble_boxes:", type(sample_boxes), sample_boxes.shape)
+    print("sample_labels:", type(sample_labels), sample_labels)
+    print("sample_classes:", type(sample_classes), sample_classes)
 
     target_layers = [wrapped_model.feature_extractor]
 
-    print("target_layers:", target_layers)
 
-    targets = [FasterRCNNBoxScoreTarget(labels=labels, bounding_boxes=boxes)]
+    ############################# get activations #############################
+    targets = [FasterRCNNBoxScoreTarget(labels=sample_labels, bounding_boxes=sample_boxes)]
     cam = EigenCAM(model,
                target_layers,
                use_cuda=torch.cuda.is_available(),
@@ -203,27 +245,22 @@ def visualize_model_cam(config_path: Path):
     grayscale_cam = grayscale_cam[0, :]
     print("grayscale_cam:", grayscale_cam.shape)
 
-    # Take the first image in the batch:
-    image = (sample["image"] * image_std + image_mean)[0]
-    # image = (image*255).byte()[0]
-    image_float_np = image.permute(1, 2, 0).cpu().numpy()
-    # image_float_np = image.cpu().numpy().reshape( (128,1024,3) )
-    # image_float_np = image.cpu().numpy()
-    print(image_float_np.shape)
-    # plt.imshow(image_float_np)
-    # plt.show()
 
+    ################### draw image with bounding boxes #########################
     cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
 
-    boxes = sample["boxes"][0]
-    boxes[:, [0, 2]] *= image.shape[-1]
-    boxes[:, [1, 3]] *= image.shape[-2]
-    # im = image.permute(1, 2, 0).cpu().numpy()
-    # im = draw_boxes(im, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
-
-    im = draw_boxes(cam_image, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
-    plt.imshow(im)
+    image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
+    plt.imshow(image_with_bounding_boxes )
     plt.show()
+
+    renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes, labels = sample_labels, class_name_map = cfg.label_map, image_float_np = image_float_np, grayscale_cam = grayscale_cam)
+    # renorm = renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float_np, grayscale_cam)
+    print(renorm)
+    # plt.imshow(renorm)
+    # plt.show()
+    # Image.fromarray()
+
+
     # im = draw_boxes(im, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
 
     # image_with_bounding_boxes = draw_boxes(boxes, labels, classes, cam_image)
