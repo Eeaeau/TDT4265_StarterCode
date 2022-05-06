@@ -113,16 +113,21 @@ def draw_image(cfg, sample, image_mean, image_std):
     plt.show()
 
 def retinanet_reshape_transform(x):
-    print("x: ", x)
-    print("x keys: ", x.keys())
+
+    # print("x: ", x)
+    # print("x keys: ", x.keys())
+    # x = list(x.values())
+    # print("0:", target_size["0"])
     # target_size = x[2].size()[-2 : ]
-    target_size = x["0"].size()[-2 : ]
-    print(target_size)
+
+    quality_lvl = 1 # lower level is higher quality
+    target_size = x[quality_lvl].size()[-2 : ]
     target_size = target_size[-2 : ]
     print(target_size)
 
     activations = []
     for value in x:
+    # for key, value in x.items():
         activations.append(torch.nn.functional.interpolate(torch.abs(value), target_size, mode='bilinear'))
     activations = torch.cat(activations, axis=1)
     return activations
@@ -152,7 +157,7 @@ def visualize_model_cam(config_path: Path):
     # model = get_trained_model(cfg)
 
     wrapped_model = RetinaNetOutputWrapper(model=model)
-    wrapped_model = wrapped_model.model.eval().to(device)
+    wrapped_model = wrapped_model.eval().to(device)
     # print(wrapped_model)
 
     # Get your input
@@ -183,7 +188,7 @@ def visualize_model_cam(config_path: Path):
 
     boxes, classes, labels, indices = predict(input_tensor, wrapped_model, 0.1, class_names)
 
-    target_layers = [wrapped_model.feature_extractor.fpn]
+    target_layers = [wrapped_model.feature_extractor]
 
     print("target_layers:", target_layers)
 
@@ -209,7 +214,15 @@ def visualize_model_cam(config_path: Path):
     # plt.show()
 
     cam_image = show_cam_on_image(image_float_np, grayscale_cam, use_rgb=True)
-    plt.imshow(cam_image)
+
+    boxes = sample["boxes"][0]
+    boxes[:, [0, 2]] *= image.shape[-1]
+    boxes[:, [1, 3]] *= image.shape[-2]
+    # im = image.permute(1, 2, 0).cpu().numpy()
+    # im = draw_boxes(im, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
+
+    im = draw_boxes(cam_image, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
+    plt.imshow(im)
     plt.show()
     # im = draw_boxes(im, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
 
