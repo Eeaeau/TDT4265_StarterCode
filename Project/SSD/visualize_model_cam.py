@@ -1,3 +1,4 @@
+from email.policy import default
 from statistics import mode
 import sys, os
 sys.path.append(os.path.dirname(os.getcwd())) # Include ../SSD in path
@@ -33,19 +34,19 @@ from tops import logger, checkpointer
 from torch.optim.lr_scheduler import ChainedScheduler
 from omegaconf import OmegaConf
 
-from pytorch_grad_cam.utils.image import show_cam_on_image, preprocess_image
 from pytorch_grad_cam import GradCAM, EigenCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image, scale_accross_batch_and_channels, scale_cam_image
+from pytorch_grad_cam.utils.image import show_cam_on_image, scale_accross_batch_and_channels, scale_cam_image, preprocess_image
 
 torch.backends.cudnn.benchmark = True
 
 from ssd.modeling.retinanetOutputWrapper import RetinaNetOutputWrapper
 
-config_path = "configs/tdt4265.py"
-# cfg = LazyConfig.load(config_path)
 from pytorch_grad_cam.utils.model_targets import FasterRCNNBoxScoreTarget, ClassifierOutputTarget
 
-from performance_assessment.save_comparison_images import get_config, get_trained_model, get_dataloader
+# from performance_assessment.save_comparison_images import get_config, get_trained_model, get_dataloader
+from tops.misc import (
+    get_config, get_trained_model, get_dataloader
+)
 
 def predict(input_tensor, model, detection_threshold, class_names):
     outputs = model(input_tensor)
@@ -112,7 +113,7 @@ def draw_image(cfg, sample, image_mean, image_std):
     plt.show()
 
 def retinanet_reshape_transform(x):
-    quality_lvl = 3 # lower level is higher quality
+    quality_lvl = 2 # lower level is higher quality
     target_size = x[quality_lvl].size()
     target_size = target_size[-2 : ]
     print("target_size: ", target_size)
@@ -124,12 +125,12 @@ def retinanet_reshape_transform(x):
     activations = torch.cat(activations, axis=1)
     return activations
 
-def renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float_np, grayscale_cam):
+def renormalize_cam_in_bounding_boxes(boxes, image_float_np, grayscale_cam):
     """Normalize the CAM to be in the range [0, 1]
     inside every bounding boxes, and zero outside of the bounding boxes. """
 
     # labels = [str(label) for label in labels]
-    print("labels: ", labels)
+    # print("labels: ", labels)
     renormalized_cam = np.zeros(grayscale_cam.shape, dtype=np.float32)
     # print("renormalized_cam.shape:", renormalized_cam.shape)
     print("grayscale_cam:", grayscale_cam)
@@ -148,20 +149,23 @@ def renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float
     print("renormalized_cam:", renormalized_cam, "renormalized_cam.shape:", renormalized_cam.shape)
 
     eigencam_image_renormalized = show_cam_on_image(image_float_np, renormalized_cam, use_rgb=True)
-    print("class_name_map:", class_name_map, type(class_name_map))
-    image_with_bounding_boxes = draw_boxes(eigencam_image_renormalized, boxes, labels, class_name_map=class_name_map)
+    # print("class_name_map:", class_name_map, type(class_name_map))
+
+    return eigencam_image_renormalized
+
+    # image_with_bounding_boxes = draw_boxes(eigencam_image_renormalized, boxes, labels, class_name_map=class_name_map)
     # image_with_bounding_boxes  = draw_boxes(cam_image, samble_boxes, sample_labels, class_name_map=cfg.label_map)
 
-    return image_with_bounding_boxes
 
+def get_cam(model, image, cfg):
+    return
 
 
 @click.command()
-@click.argument("config_path", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-
+@click.argument("config_path", default="configs/tdt4265_fpn.py", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def visualize_model_cam(config_path: Path):
-    if config_path is None:
-        config_path = "configs/tdt4265_fpn.py"
+    # if config_path is None:
+    #     config_path = "configs/tdt4265_fpn.py"
     # print("config_path:", config_path)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -172,23 +176,17 @@ def visualize_model_cam(config_path: Path):
 
     ############################# get model #####################################
 
-    # tops.init(cfg.output_dir)
-    # tops.set_AMP(cfg.train.amp)
-    # tops.set_seed(cfg.train.seed)
+    tops.init(cfg.output_dir)
+    tops.set_AMP(cfg.train.amp)
+    tops.set_seed(cfg.train.seed)
 
-    # model = tops.to_cuda(instantiate(cfg.model))
     model = get_trained_model(cfg)
-    # cfg = get_config(config_path)
-    # model = get_trained_model(cfg)
 
     wrapped_model = RetinaNetOutputWrapper(model=model)
     wrapped_model = wrapped_model.eval().to(device)
     # print(wrapped_model)
 
     # Get your input
-    # img = read_image("data/tdt4265_2022/images/train/trip007_glos_Video00000_3.png")
-    # input_tensor = normalize(img.float()/255, mean=[0.485, 0.456, 0.406],
-    #                             std=[0.229, 0.224, 0.225])
 
     # input_tensor = input_tensor.to(device)
     # # Add a batch dimension:
@@ -205,16 +203,11 @@ def visualize_model_cam(config_path: Path):
 
     ############################# get preds #############################
     # draw_image(cfg, sample, image_mean, image_std)
-    # labels = sample["labels"][0].cpu().numpy().tolist()
+
     class_names = list(cfg["label_map"].values())
     print("class_names:", class_names)
     # This will help us create a different color for each class
     COLORS = np.random.uniform(0, 255, size=(len(class_names), 3))
-
-    # boxes, classes, labels, indices = predict(input_tensor, wrapped_model, 0.1, class_names)
-    # print("boxes:", boxes)
-    # print("classes:", classes)
-    # print("labels:", labels)
 
     image = (sample["image"] * image_std + image_mean)[0]
     image_float_np = image.permute(1, 2, 0).cpu().numpy()
@@ -255,20 +248,18 @@ def visualize_model_cam(config_path: Path):
 
     plt.subplot(2, 1, 1)
     image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
-    plt.imshow(image_with_bounding_boxes )
+    plt.imshow(image_with_bounding_boxes)
     # plt.show()
 
     renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes,
-        labels = sample_labels,
-        class_name_map = cfg.label_map,
         image_float_np = image_float_np,
         grayscale_cam = grayscale_cam)
 
+    image_with_bounding_boxes  = draw_boxes(renorm, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.subplot(2, 1, 2)
-    plt.imshow(renorm)
+    plt.imshow(image_with_bounding_boxes)
     plt.show()
     # Image.fromarray()
-
 
     # im = draw_boxes(im, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
 

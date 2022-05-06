@@ -1,6 +1,16 @@
 import torch
 from easydict import EasyDict
 
+import tops
+import numpy as np
+from tops.config import instantiate
+from tops.config import LazyCall as L
+from tops.checkpointer import load_checkpoint
+from vizer.draw import draw_boxes
+from ssd import utils
+from ssd.data.transforms import ToTensor
+import os
+
 def print_module_summary(module, inputs, max_nesting=3, skip_redundant=True):
     # Adapted from: https://github.com/NVlabs/stylegan3
     assert isinstance(module, torch.nn.Module)
@@ -74,3 +84,61 @@ def print_module_summary(module, inputs, max_nesting=3, skip_redundant=True):
         print('  '.join(cell + ' ' * (width - len(cell)) for cell, width in zip(row, widths)))
     print()
     return outputs
+
+
+########### from save_comparison_images.py ###########
+
+def get_config(config_path):
+    cfg = utils.load_config(config_path)
+    cfg.train.batch_size = 1
+    cfg.data_train.dataloader.shuffle = False
+    cfg.data_val.dataloader.shuffle = False
+    return cfg
+
+
+def get_trained_model(cfg):
+    model = tops.to_cuda(instantiate(cfg.model))
+    model.eval()
+    ckpt = load_checkpoint(cfg.output_dir.joinpath("checkpoints"), map_location=tops.get_device())
+    model.load_state_dict(ckpt["model"])
+    return model
+
+
+def get_dataloader(cfg, dataset_to_visualize):
+    # We use just to_tensor to get rid of all data augmentation, etc...
+    to_tensor_transform = [
+        L(ToTensor)()
+    ]
+    if dataset_to_visualize == "train":
+        cfg.data_train.dataset.transform.transforms = to_tensor_transform
+        data_loader = instantiate(cfg.data_train.dataloader)
+    else:
+        cfg.data_val.dataset.transform.transforms = to_tensor_transform
+        cfg.data_val.dataloader.collate_fn = utils.batch_collate
+        data_loader = instantiate(cfg.data_val.dataloader)
+
+    return data_loader
+
+
+def convert_boxes_coords_to_pixel_coords(boxes, width, height):
+    boxes[:, [0, 2]] *= width
+    boxes[:, [1, 3]] *= height
+    return boxes.cpu().numpy()
+
+
+def convert_image_to_hwc_byte(image):
+    first_image_in_batch = image[0]  # This is the only image in batch
+    image_pixel_values = (first_image_in_batch * 255).byte()
+    image_h_w_c_format = image_pixel_values.permute(1, 2, 0)
+    return image_h_w_c_format.cpu().numpy()
+
+def create_filepath(save_folder, image_id):
+    filename = "image_" + str(image_id) + ".png"
+    return os.path.join(save_folder, filename)
+
+def get_save_folder_name(cfg, dataset_to_visualize):
+    return os.path.join(
+        "performance_assessment",
+        cfg.run_name,
+        dataset_to_visualize
+    )

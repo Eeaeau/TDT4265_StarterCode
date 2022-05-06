@@ -6,56 +6,20 @@ import numpy as np
 from tops.config import instantiate
 from tops.config import LazyCall as L
 from tops.checkpointer import load_checkpoint
+from tops.misc import (
+    get_config,
+    get_trained_model,
+    get_dataloader,
+    convert_boxes_coords_to_pixel_coords,
+    convert_image_to_hwc_byte,
+    create_filepath,
+    get_save_folder_name
+)
+
 from vizer.draw import draw_boxes
 from ssd import utils
 from tqdm import tqdm
 from ssd.data.transforms import ToTensor
-
-
-def get_config(config_path):
-    cfg = utils.load_config(config_path)
-    cfg.train.batch_size = 1
-    cfg.data_train.dataloader.shuffle = False
-    cfg.data_val.dataloader.shuffle = False
-    return cfg
-
-
-def get_trained_model(cfg):
-    model = tops.to_cuda(instantiate(cfg.model))
-    model.eval()
-    ckpt = load_checkpoint(cfg.output_dir.joinpath("checkpoints"), map_location=tops.get_device())
-    model.load_state_dict(ckpt["model"])
-    return model
-
-
-def get_dataloader(cfg, dataset_to_visualize):
-    # We use just to_tensor to get rid of all data augmentation, etc...
-    to_tensor_transform = [
-        L(ToTensor)()
-    ]
-    if dataset_to_visualize == "train":
-        cfg.data_train.dataset.transform.transforms = to_tensor_transform
-        data_loader = instantiate(cfg.data_train.dataloader)
-    else:
-        cfg.data_val.dataset.transform.transforms = to_tensor_transform
-        cfg.data_val.dataloader.collate_fn = utils.batch_collate
-        data_loader = instantiate(cfg.data_val.dataloader)
-
-    return data_loader
-
-
-def convert_boxes_coords_to_pixel_coords(boxes, width, height):
-    boxes[:, [0, 2]] *= width
-    boxes[:, [1, 3]] *= height
-    return boxes.cpu().numpy()
-
-
-def convert_image_to_hwc_byte(image):
-    first_image_in_batch = image[0]  # This is the only image in batch
-    image_pixel_values = (first_image_in_batch * 255).byte()
-    image_h_w_c_format = image_pixel_values.permute(1, 2, 0)
-    return image_h_w_c_format.cpu().numpy()
-
 
 def visualize_annotations_on_image(image, batch, label_map):
     boxes = convert_boxes_coords_to_pixel_coords(batch["boxes"][0], batch["width"], batch["height"])
@@ -77,13 +41,14 @@ def visualize_model_predictions_on_image(image, img_transform, batch, model, lab
     return image_with_predicted_boxes
 
 
-def create_filepath(save_folder, image_id):
-    filename = "image_" + str(image_id) + ".png"
-    return os.path.join(save_folder, filename)
-
-
 def create_comparison_image(batch, model, img_transform, label_map, score_threshold):
-    image = convert_image_to_hwc_byte(batch["image"])
+    image = batch["image"]
+    # TODO: add cam here to visualize the model predictions
+    print("Image shape:", image.shape, "Image type:", type(image), image.dtype)
+
+    image = convert_image_to_hwc_byte(image)
+
+
     image_with_annotations = visualize_annotations_on_image(image, batch, label_map)
     image_with_model_predictions = visualize_model_predictions_on_image(
         image, img_transform, batch, model, label_map, score_threshold)
@@ -112,21 +77,13 @@ def create_and_save_comparison_images(dataloader, model, cfg, save_folder, score
         filepath = create_filepath(save_folder, i)
         cv2.imwrite(filepath, comparison_image[:, :, ::-1])
 
-
-def get_save_folder_name(cfg, dataset_to_visualize):
-    return os.path.join(
-        "performance_assessment",
-        cfg.run_name,
-        dataset_to_visualize
-    )
-
-
 @click.command()
 @click.argument("config_path")
 @click.option("--train", default=False, is_flag=True, help="Use the train dataset instead of val")
 @click.option("-n", "--num_images", default=500, type=int, help="The max number of images to save")
 @click.option("-c", "--conf_threshold", default=0.3, type=float, help="The confidence threshold for predictions")
-def main(config_path, train, num_images, conf_threshold):
+@click.option("--cam", default=False, type=bool, help="Visualize the model cam")
+def main(config_path, train, num_images, conf_threshold, cam):
     cfg = get_config(config_path)
     model = get_trained_model(cfg)
 
