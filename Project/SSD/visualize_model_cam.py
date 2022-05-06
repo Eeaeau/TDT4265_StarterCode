@@ -81,7 +81,6 @@ def get_sample_data(cfg, dataset_to_visualize = "train"):
         dataset = instantiate(cfg.data_val.dataloader)
         gpu_transform = instantiate(cfg.data_val.gpu_transform)
 
-    # print("dataset:", dataset)
     # Assumes that the first GPU transform is Normalize
     # If it fails, just change the index from 0.
     image_mean = torch.tensor(cfg.data_train.gpu_transform.transforms[0].mean).view(1, 3, 1, 1)
@@ -113,7 +112,7 @@ def draw_image(cfg, sample, image_mean, image_std):
     plt.show()
 
 def retinanet_reshape_transform(x):
-    quality_lvl = 0 # lower level is higher quality
+    quality_lvl = 3 # lower level is higher quality
     target_size = x[quality_lvl].size()
     target_size = target_size[-2 : ]
     print("target_size: ", target_size)
@@ -130,7 +129,7 @@ def renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float
     inside every bounding boxes, and zero outside of the bounding boxes. """
 
     # labels = [str(label) for label in labels]
-
+    print("labels: ", labels)
     renormalized_cam = np.zeros(grayscale_cam.shape, dtype=np.float32)
     # print("renormalized_cam.shape:", renormalized_cam.shape)
     print("grayscale_cam:", grayscale_cam)
@@ -146,8 +145,11 @@ def renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float
 
     renormalized_cam = np.max(np.float32(images), axis = 0)
     renormalized_cam = scale_cam_image(renormalized_cam)
+    print("renormalized_cam:", renormalized_cam, "renormalized_cam.shape:", renormalized_cam.shape)
+
     eigencam_image_renormalized = show_cam_on_image(image_float_np, renormalized_cam, use_rgb=True)
-    image_with_bounding_boxes = draw_boxes(eigencam_image_renormalized, boxes, labels, class_name_map)
+    print("class_name_map:", class_name_map, type(class_name_map))
+    image_with_bounding_boxes = draw_boxes(eigencam_image_renormalized, boxes, labels, class_name_map=class_name_map)
     # image_with_bounding_boxes  = draw_boxes(cam_image, samble_boxes, sample_labels, class_name_map=cfg.label_map)
 
     return image_with_bounding_boxes
@@ -255,9 +257,9 @@ def visualize_model_cam(config_path: Path):
 
     renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes, labels = sample_labels, class_name_map = cfg.label_map, image_float_np = image_float_np, grayscale_cam = grayscale_cam)
     # renorm = renormalize_cam_in_bounding_boxes(boxes, labels, class_name_map, image_float_np, grayscale_cam)
-    print(renorm)
-    # plt.imshow(renorm)
-    # plt.show()
+    # print(renorm)
+    plt.imshow(renorm)
+    plt.show()
     # Image.fromarray()
 
 
