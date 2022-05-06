@@ -116,7 +116,7 @@ def retinanet_reshape_transform(x):
     quality_lvl = 2 # lower level is higher quality
     target_size = x[quality_lvl].size()
     target_size = target_size[-2 : ]
-    print("target_size: ", target_size)
+    # print("target_size: ", target_size)
 
     activations = []
     for value in x:

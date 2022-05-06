@@ -46,19 +46,19 @@ def visualize_model_predictions_on_image(image, img_transform, batch, model, lab
 def create_comparison_image(batch, model, img_transform, label_map, score_threshold):
     image = batch["image"]
 
+    image_8bit = convert_image_to_hwc_byte(image)
     # TODO: add cam here to visualize the model predictions
-    print("Image shape:", image.shape, "Image type:", type(image), image.dtype)
+    # print("Image shape:", image.shape, "Image type:", type(image), image.dtype)
 
     pred_image = tops.to_cuda(batch["image"])
     transformed_image = img_transform({"image": pred_image})["image"]
     boxes, categories, scores = model(transformed_image, score_threshold=score_threshold)[0]
     boxes = convert_boxes_coords_to_pixel_coords(boxes.detach().cpu(), batch["width"], batch["height"])
-    print("Boxes shape:", boxes.shape, "Boxes type:", type(boxes), boxes)
+    # print("Boxes shape:", boxes.shape, "Boxes type:", type(boxes), boxes)
 
     image = get_cam_image(model=model, input_tensor=image, labels=label_map, boxes=boxes)
 
 
-    # image = convert_image_to_hwc_byte(image)
 
 
     image_with_annotations = visualize_annotations_on_image(image, batch, label_map)
@@ -66,7 +66,7 @@ def create_comparison_image(batch, model, img_transform, label_map, score_thresh
         image, img_transform, batch, model, label_map, score_threshold)
 
     concatinated_image = np.concatenate([
-        image,
+        image_8bit,
         image_with_annotations,
         image_with_model_predictions
     ], axis=0)

@@ -10,7 +10,7 @@ class RetinaNetOutputWrapper(torch.nn.Module):
         self.model = model
         self.feature_extractor = model.feature_extractor
         # print(self.model)
-        print("######################## wrapper #####################################")
+        # print("######################## wrapper #####################################")
 
     def forward(self, x):
         boxes, labels, scores = self.model(x)[0]
