@@ -88,9 +88,9 @@ class RetinaNet(nn.Module):
             class_bias = torch.log(torch.tensor(p*((self.num_classes-1)/(1-p))))
 
             nn.init.constant_(self.classification_heads[-1].bias.data[:self.n_anchors], class_bias)
-            for param in self.classification_heads[-1].parameters():
-                    if param.dim() > 1:
-                        nn.init.xavier_uniform_(param)
+            # for param in self.classification_heads[-1].parameters():
+            #         if param.dim() > 1:
+            #             nn.init.xavier_uniform_(param)
 
 
     def regress_boxes(self, features):
