@@ -15,9 +15,11 @@ def focal_loss(confs, gt_labels, alpha, gamma=2):
     p_k = F.softmax(confs, dim=1)
 
     alpha = torch.tensor([[10] + 8*[1000]]).reshape((1, 9, 1)).to(p_k.device)
-
+    #alpha = torch.tensor([[[10],[1000],[1000],[1000],[1000],[1000],[1000],[1000],[1000]]]).to(p_k.device)
     weight = torch.pow(1.0-p_k, gamma)
     focal = -alpha * weight * log_pk
+    #print(hot_encoded.shape)
+    #print(focal.shape)
     loss_tmp = hot_encoded*focal
     focal_loss = loss_tmp.sum(dim=1).mean()
 
