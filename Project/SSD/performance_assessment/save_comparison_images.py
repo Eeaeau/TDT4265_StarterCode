@@ -61,7 +61,7 @@ def create_comparison_image(batch, model, img_transform, label_map, score_thresh
         boxes = convert_boxes_coords_to_pixel_coords(boxes.detach().cpu(), batch["width"], batch["height"])
         # print("Boxes shape:", boxes.shape, "Boxes type:", type(boxes), boxes)
 
-        image = (get_cam_image(model=model, input_tensor=image, labels=label_map, boxes=boxes, norm=False)).astype(np.uint8)
+        image = (get_cam_image(model=model, input_tensor=image, labels=label_map, boxes=boxes, norm=False, renorm=True)).astype(np.uint8)
     else:
         image = convert_image_to_hwc_byte(image)
 

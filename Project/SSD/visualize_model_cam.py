@@ -43,7 +43,6 @@ from ssd.modeling.retinanetOutputWrapper import RetinaNetOutputWrapper
 
 from pytorch_grad_cam.utils.model_targets import FasterRCNNBoxScoreTarget, ClassifierOutputTarget
 
-# from performance_assessment.save_comparison_images import get_config, get_trained_model, get_dataloader
 from tops.misc import (
     get_config, get_trained_model, get_dataloader
 )
@@ -203,13 +202,7 @@ def get_cam_image(model, input_tensor, labels, boxes, norm = True, renorm=False)
 @click.command()
 @click.argument("config_path", default="configs/tdt4265_fpn.py", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def visualize_model_cam(config_path: Path):
-    # if config_path is None:
-    #     config_path = "configs/tdt4265_fpn.py"
-    # print("config_path:", config_path)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # cfg = get_config(config_path)
-    # model = get_trained_model(cfg)
     cfg = utils.load_config(config_path)
     print("cfg:", cfg.keys())
 
@@ -221,30 +214,15 @@ def visualize_model_cam(config_path: Path):
 
     model = get_trained_model(cfg)
 
-    # print(wrapped_model)
-
-    # Get your input
-
-    # input_tensor = input_tensor.to(device)
-    # # Add a batch dimension:
-    # input_tensor = input_tensor.unsqueeze(0)
-
     ############################# get sample data #############################
     sample, image_mean, image_std = get_sample_data(cfg)
 
     input_tensor = (sample["image"] * image_std + image_mean)
-    # input_tensor = input_tensor.to(device)
-    # print("input_tensor shape:", input_tensor.shape)
-    # print("input_tensor:", input_tensor)
-
 
     ############################# get preds #############################
-    # draw_image(cfg, sample, image_mean, image_std)
 
     class_names = list(cfg["label_map"].values())
     print("class_names:", class_names)
-    # This will help us create a different color for each class
-    COLORS = np.random.uniform(0, 255, size=(len(class_names), 3))
 
     image = input_tensor[0]
     image_float_np = image.permute(1, 2, 0).cpu().numpy()
@@ -262,50 +240,22 @@ def visualize_model_cam(config_path: Path):
     # print("sample_labels:", type(sample_labels), sample_labels)
     # print("sample_classes:", type(sample_classes), sample_classes)
 
-    # target_layers = [wrapped_model.feature_extractor]
-
-    ############################# get activations #############################
-    # targets = [FasterRCNNBoxScoreTarget(labels=sample_labels, bounding_boxes=sample_boxes)]
-    # cam = EigenCAM(model,
-    #            target_layers,
-    #            use_cuda=torch.cuda.is_available(),
-    #            reshape_transform=retinanet_reshape_transform)
-    # cam.uses_gradients=False
-
-    # grayscale_cam = cam(input_tensor, targets=targets)
-    # print("grayscale_cam:", grayscale_cam.shape)
-    # grayscale_cam = grayscale_cam[0, :]
-    # grayscale_cam = grayscale_cam / np.max(grayscale_cam)
-    # print("grayscale_cam:", grayscale_cam.shape)
-
-
-
     ################### draw image with bounding boxes #########################
 
+    # get activations
     cam_image = get_cam_image(model, input_tensor, sample_labels, sample_boxes, renorm=False)
 
     plt.subplot(2, 1, 1)
     image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.imshow(image_with_bounding_boxes)
-    # plt.show()
 
+    # get activations
     renorm = get_cam_image(model, input_tensor, sample_labels, sample_boxes, renorm=True)
-
-    # renorm = renormalize_cam_in_bounding_boxes(boxes = sample_boxes,
-    #     image_float_np = image_float_np,
-    #     grayscale_cam = grayscale_cam)
 
     image_with_bounding_boxes  = draw_boxes(renorm, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.subplot(2, 1, 2)
     plt.imshow(image_with_bounding_boxes)
     plt.show()
-    # Image.fromarray()
-
-    # im = draw_boxes(im, boxes.cpu().numpy(), sample["labels"][0].cpu().numpy().tolist(), class_name_map=cfg.label_map)
-
-    # image_with_bounding_boxes = draw_boxes(boxes, labels, classes, cam_image)
-    # Image.fromarray(image_with_bounding_boxes)
-
 
 if __name__ == "__main__":
     np.random.seed(0)
