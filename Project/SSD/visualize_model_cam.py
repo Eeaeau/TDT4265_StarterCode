@@ -34,7 +34,7 @@ from tops import logger, checkpointer
 from torch.optim.lr_scheduler import ChainedScheduler
 from omegaconf import OmegaConf
 
-from pytorch_grad_cam import GradCAM, EigenCAM
+from pytorch_grad_cam import GradCAM, GradCAMPlusPlus, EigenCAM, AblationCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image, scale_accross_batch_and_channels, scale_cam_image, preprocess_image
 
 torch.backends.cudnn.benchmark = True
@@ -64,7 +64,7 @@ def predict(input_tensor, model, detection_threshold, class_names):
     boxes = np.int32(boxes)
     return boxes, classes, labels, indices
 
-def get_sample_data(cfg, dataset_to_visualize = "train"):
+def get_sample_data(cfg, dataset_to_visualize = "val"):
 
     cfg.train.batch_size = 1
     if dataset_to_visualize == "train":
@@ -170,6 +170,7 @@ def get_cam_image(model, input_tensor, labels, boxes, norm = True, renorm=False)
     wrapped_model = RetinaNetOutputWrapper(model=model)
     wrapped_model = wrapped_model.eval().to(tops.get_device())
 
+    # print(wrapped_model.feature_extractor)
     target_layers = [wrapped_model.feature_extractor]
 
     ############################# get activations #############################
@@ -247,6 +248,7 @@ def visualize_model_cam(config_path: Path):
 
     plt.subplot(2, 1, 1)
     image_with_bounding_boxes  = draw_boxes(cam_image, sample_boxes, sample_labels, class_name_map=cfg.label_map)
+    plt.title("Default CAM")
     plt.imshow(image_with_bounding_boxes)
 
     # get activations
@@ -254,6 +256,7 @@ def visualize_model_cam(config_path: Path):
 
     image_with_bounding_boxes  = draw_boxes(renorm, sample_boxes, sample_labels, class_name_map=cfg.label_map)
     plt.subplot(2, 1, 2)
+    plt.title("Renormalized CAM")
     plt.imshow(image_with_bounding_boxes)
     plt.show()
 
