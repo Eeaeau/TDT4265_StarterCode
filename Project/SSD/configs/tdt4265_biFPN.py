@@ -15,9 +15,8 @@ from .tdt4265_fpn import (
 )
 
 from tops.config import LazyCall as L
-from ssd.modeling.backbones import BiFPN,BiFPNv2
+from ssd.modeling.backbones import BiFPN
 
 anchors.aspect_ratios = [ [2, 3] , [2, 3], [2, 3], [2, 3], [2, 3], [2, 3] ]
 
 backbone = L(BiFPN)()
-#backbone = L(BiFPNv2)()
