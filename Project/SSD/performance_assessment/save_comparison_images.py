@@ -55,13 +55,17 @@ def create_comparison_image(batch, model, img_transform, label_map, score_thresh
     # TODO: add cam here to visualize the model predictions
     # print("Image shape:", image.shape, "Image type:", type(image), image.dtype)
     if cam_enabled:
-        pred_image = tops.to_cuda(batch["image"])
-        transformed_image = img_transform({"image": pred_image})["image"]
-        boxes, categories, scores = model(transformed_image, score_threshold=score_threshold)[0]
-        boxes = convert_boxes_coords_to_pixel_coords(boxes.detach().cpu(), batch["width"], batch["height"])
+        try:
+            pred_image = tops.to_cuda(batch["image"])
+            transformed_image = img_transform({"image": pred_image})["image"]
+            boxes, categories, scores = model(transformed_image, score_threshold=score_threshold)[0]
+            boxes = convert_boxes_coords_to_pixel_coords(boxes.detach().cpu(), batch["width"], batch["height"])
+            image = (get_cam_image(model=model, input_tensor=image, labels=label_map, boxes=boxes, norm=False, renorm=True)).astype(np.uint8)
+        except:
+            print("Could not visualize model predictions on image")
+            image = convert_image_to_hwc_byte(image)
         # print("Boxes shape:", boxes.shape, "Boxes type:", type(boxes), boxes)
 
-        image = (get_cam_image(model=model, input_tensor=image, labels=label_map, boxes=boxes, norm=False, renorm=False)).astype(np.uint8)
     else:
         image = convert_image_to_hwc_byte(image)
 
