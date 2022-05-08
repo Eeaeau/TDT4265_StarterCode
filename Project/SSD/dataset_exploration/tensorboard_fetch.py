@@ -11,15 +11,15 @@ assert major_ver >= 2 and minor_ver >= 3, \
     "This notebook requires TensorBoard 2.3 or later."
 print("TensorBoard version: ", tb.__version__)
 
-experiment_id = "hzh50lR3Skafw6l5IEzY7A"
+experiment_id = "Ab6ml7pAQeGrZvT0d5QVqw"
 experiment = tb.data.experimental.ExperimentFromDev(experiment_id)
 print(type(experiment))
 df = experiment.get_scalars()
-#options = ['tdt4265_updated_res101']
+options = ['tdt4265_focal_loss_res34']
 #options = ['tdt4265_augmented']
-#options = ['tdt4265','tdt4265_augmented']
-#options = ['tdt4265_updated_res34','tdt4265_updated_res101','tdt4265_deeper_regression_heads_res34']
-options = ['tdt4265','tdt4265_augmented','tdt4265_fpn_res34','tdt4265_focal_loss_res34', 'tdt4265_deeper_regression_heads_res34','tdt4265_init_weights_res34']
+#options = ['tdt4265_init_weights_res34_new_weights']
+#options = ['tdt4265_focal_loss_res34','tdt4265_focal_loss_res50','tdt4265_focal_loss_res101']
+#options = ['tdt4265','tdt4265_augmented','tdt4265_fpn_res34','tdt4265_focal_loss_res34', 'tdt4265_deeper_regression_heads_res34','tdt4265_init_weights_res34']
 #options = ['tdt4265_init_weights_res34','tdt4265_init_weights_res50', 'tdt4265_init_weights_res101']
 df['run'] = df["run"].apply(lambda x: x.replace("\\logs\\tensorboard", ""))
 
@@ -54,24 +54,24 @@ def maxmAPvalToLatex(df):
     
     #print(maximums_metrics.to_latex(index=False))
     
-#maxmAPvalToLatex(df_runs)
+maxmAPvalToLatex(df_runs)
 #options = ['tdt4265']
 #PlotmAPTag(df, options, 'metrics/AP_person')
 #df_loss = df[df['tag']=='loss/']
 #
 
-df_loss = df_runs.loc[df_runs.tag.str.contains('loss')]
+# df_loss = df_runs.loc[df_runs.tag.str.contains('loss')]
 
 
-df_map_runs = df_map.loc[df_map['run'].isin(options)]
-df_loss_runs = df_loss.loc[df_loss['run'].isin(options)]
+# df_map_runs = df_map.loc[df_map['run'].isin(options)]
+# # df_loss_runs = df_loss.loc[df_loss['run'].isin(options)]
 
-#sns.relplot(data=df_loss, x="step", y="value", hue='run', col='tag', kind='line')
-#plt.ylim(0,10)
-sns.lineplot(data=df_map, x="step", y="value", hue='run').set_title("mAP@0.5:0.95")
-figure = plt.gcf()
+# sns.relplot(data=df_loss, x="step", y="value", hue='run', col='tag', kind='line')
+# plt.ylim(0,5)
+# #sns.lineplot(data=df_map, x="step", y="value", hue='run').set_title("mAP@0.5:0.95")
+# figure = plt.gcf()
 
-figure.set_size_inches(12, 8)
-plt.savefig('./dataset_exploration/all_2_3.png',bbox_inches="tight", dpi=200)
-plt.savefig('./dataset_exploration/all_2_3.eps',bbox_inches="tight", dpi=200)
-plt.show()
+# figure.set_size_inches(14, 14)
+# plt.savefig('./dataset_exploration/all2_3_new_loss.png',bbox_inches="tight", dpi=200)
+# plt.savefig('./dataset_exploration/all2_3_new_loss.eps',bbox_inches="tight", dpi=200)
+# plt.show()

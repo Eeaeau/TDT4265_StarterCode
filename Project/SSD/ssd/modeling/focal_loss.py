@@ -13,8 +13,8 @@ def focal_loss(confs, gt_labels, alpha, gamma=2):
 
     log_pk = F.log_softmax(confs, dim=1)
     p_k = F.softmax(confs, dim=1)
-
-    alpha = torch.tensor([[10] + 8*[1000]]).reshape((1, 9, 1)).to(p_k.device)
+    alpha = torch.tensor(alpha).reshape((1, 9, 1)).to(p_k.device)
+    #alpha = torch.tensor([[10] + 8*[1000]]).reshape((1, 9, 1)).to(p_k.device)
     #alpha = torch.tensor([[[10],[1000],[1000],[1000],[1000],[1000],[1000],[1000],[1000]]]).to(p_k.device)
     weight = torch.pow(1.0-p_k, gamma)
     focal = -alpha * weight * log_pk
@@ -34,11 +34,12 @@ class FocalLoss(nn.Module):
         2. Localization Loss: Only on positive labels
         Suppose input dboxes has the shape 8732x4
     """
-    def __init__(self, anchors, gamma=2, eps=1e-7):
+    def __init__(self, anchors, alpha, gamma=2, eps=1e-7):
         super().__init__()
         self.scale_xy = 1.0/anchors.scale_xy
         self.scale_wh = 1.0/anchors.scale_wh
-        self.alpha = [[[0.01], [1],[1],[1],[1],[1],[1],[1],[1]]]
+        self.alpha=alpha
+        #self.alpha = [[[0.01], [1],[1],[1],[1],[1],[1],[1],[1]]]
         self.sl1_loss = nn.SmoothL1Loss(reduction='none')
         self.anchors = nn.Parameter(anchors(order="xywh").transpose(0, 1).unsqueeze(dim = 0),
             requires_grad=False)
