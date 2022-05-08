@@ -48,7 +48,7 @@ class ConvLayer(nn.Module):
         self.activation = nn.ReLU()
 
     def forward(self, inputs):
-        #print(inputs.shape)
+       
         x = self.conv(inputs)
         x = self.batchnorm(x)
         return self.activation(x)
@@ -123,17 +123,16 @@ class BiFPN(nn.Module):
     """
 
     def __init__(self, pretrained: bool=True, 
-                #output_feature_sizes: List[List[int]], 
+                
                 fpn_out_channels: int = 256, 
-                model_version:str = "resnet34",
-                num_layers=3):
+                model_version:str = "resnet34",):
         super(BiFPN, self).__init__()
         
         self.fpn_out_channels = fpn_out_channels
         self.out_channels = [self.fpn_out_channels]*6
-        #self.output_feature_shape = output_feature_sizes
+       
         model_version = "resnet101"
-        #self.feature_extractor = nn.Sequential(*list(torchvision.models.resnet34(pretrained=pretrained).children())[:-4])
+        
         self.name = model_version +"WithFPN"
         
         m = torch.hub.load('pytorch/vision:v0.11.2', model_version, pretrained=pretrained) #'pytorch/vision:v0.11.2' used here.
@@ -145,8 +144,7 @@ class BiFPN(nn.Module):
 
         with torch.no_grad():
             out = self.body(inp)
-            # print(out)
-            # x = out["3"] #hva er poenget med denne?
+            
             x = list(out.values())[-1]
 
         in_channels_list = [o.shape[1] for o in out.values()]
@@ -154,11 +152,6 @@ class BiFPN(nn.Module):
         
 
         feature_size =256
-
-        """
-        This one works for resnet34
-        map 0.03
-        """
         self.p3 = nn.Conv2d( in_channels_list[0], feature_size, kernel_size=1, stride=1, padding=0)
         self.p4 = nn.Conv2d( in_channels_list[1], feature_size, kernel_size=1, stride=1, padding=0)
         self.p5 = nn.Conv2d( in_channels_list[2], feature_size, kernel_size=1, stride=1, padding=0)
@@ -167,8 +160,7 @@ class BiFPN(nn.Module):
         self.p7 = nn.Conv2d(feature_size, feature_size, kernel_size=1, stride=1, padding=0)
         self.p7 = nn.Conv2d(feature_size, feature_size, kernel_size=1, stride=1, padding=0)
         self.p8 = nn.Conv2d(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-        #self.p7 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-        #self.p8 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1) #added a 6th layer in order to get the same output shape as the original model
+        
 
         
 
@@ -198,7 +190,7 @@ class BiFPN(nn.Module):
         self.bifpn = nn.Sequential(*bifpns)
 
     def forward(self, x):
-        # Ignore five first "layers"/operations, befor we start "storing" at p3
+        
         features = []
         
         x = self.body(x)
@@ -207,7 +199,7 @@ class BiFPN(nn.Module):
             x[f"{i+4}"] = extra(x[f"{i+3}"])
         
         
-        #p2_x = self.p2(x["3"])
+        
         ## Calculate the input column of BiFPN
         p3_x = self.p3(x["0"])
         """
@@ -223,40 +215,15 @@ class BiFPN(nn.Module):
         p7_x = self.p7(x["4"])
         p8_x = self.p8(p7_x)
 
-        # """
-        # testing
-        # """
-        # p3_x = self.p3(x["0"])
-        # p4_x = self.p4(p3_x)
-        # p5_x = self.p5(p4_x)
-        # p6_x = self.p6(p5_x)
-        # p7_x = self.p7(p6_x)
-        # p8_x = self.p8(p7_x)
-        
+       
         
 
       
         
         
         
-        
-        
         features = [p3_x, p4_x, p5_x, p6_x, p7_x,p8_x]
 
         out_features = self.bifpn(features)
-        #out_features.append(x["5"])
         
-        #out_features.append(p8)		
-        #print(len(out_features))
-        # final= [x["2"]]
-        # for i in out_features:
-        #      final.append(i)
-        
-        # for idx, feature in enumerate(out_features):
-        #     h, w = self.output_feature_shape[idx]
-        #     expected_shape = (self.fpn_out_channels, h, w)
-        #     assert feature.shape[1:] == expected_shape, \
-        #         f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
-        # assert len(out_features) == len(self.output_feature_shape),\
-        #     f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         return tuple(out_features)
