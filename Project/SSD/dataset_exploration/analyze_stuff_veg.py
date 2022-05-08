@@ -79,7 +79,8 @@ def histogramLabelDist(dataloader,labels,save_fig=False):
     sns.histplot(data=count_labels, kde=False,bins=len(labels),discrete=True)
     plt.xticks(x_values,labels,rotation=40)
     if save_fig:
-        plt.savefig('./dataset_exploration/images/data_distribution_val_sns.png', bbox_inches = "tight",dpi=200)
+        plt.savefig('./dataset_exploration/images/data_distribution_train_updated_dataset_sns.png', bbox_inches = "tight",dpi=200)
+        plt.savefig('./dataset_exploration/images/data_distribution_train_updated_dataset_sns.eps', bbox_inches = "tight",dpi=200)
     plt.show()
 
 
@@ -248,9 +249,9 @@ def omegaDictTolist(cfg_label_map): #mb getLabels
     return labels
 
 def main():
-    config_path = "configs/tdt4265.py"
+    config_path = "configs/tdt4265_updated_res34.py"
     cfg = get_config(config_path)
-    dataset_to_analyze = "val"  # or "val"
+    dataset_to_analyze = "train"  # or "val"
     
     print("Label map is:", cfg.label_map)
     #print(cfg.label_map)
@@ -259,7 +260,7 @@ def main():
     dataloader_train = get_dataloader(cfg, 'train')
     dataloader_val = get_dataloader(cfg, 'val')
     #analyze_something(dataloader, labels)
-    #histogramLabelDist(dataloader,labels)
+    histogramLabelDist(dataloader,labels, save_fig=True)
     #histogramNumLabel(dataloader)
     #imagesAbove25Labels(dataloader,cfg, save_folder='./dataset_exploration/images/images_above25_labels_val')
     #imagesUnderXLabels(3,dataloader,cfg, save_folder='./dataset_exploration/images/images_under3_labels_train')
@@ -267,7 +268,7 @@ def main():
     #w_t, h_t = widthHight(dataloader_train)
     #w_v, h_v  = widthHight(dataloader_val)
     #sizeDistribution(w_t,h_t,w_v,h_v)
-    df = createDataframe(dataloader_train, dataloader_val, labels)
-    classPlot(df, 'person')
+    #df = createDataframe(dataloader_train, dataloader_val, labels)
+    #classPlot(df, 'person')
 if __name__ == '__main__':
     main()

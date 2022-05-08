@@ -15,11 +15,11 @@ experiment_id = "hzh50lR3Skafw6l5IEzY7A"
 experiment = tb.data.experimental.ExperimentFromDev(experiment_id)
 print(type(experiment))
 df = experiment.get_scalars()
-#options = ['tdt4265']
+#options = ['tdt4265_updated_res101']
 #options = ['tdt4265_augmented']
-options = ['tdt4265','tdt4265_augmented']
-options = ['tdt4265_updated_res34','tdt4265_updated_res101','tdt4265_deeper_regression_heads_res34']
-#options = ['tdt4265','tdt4265_augmented','tdt4265_fpn_res34','tdt4265_focal_loss_res34', 'tdt4265_deeper_regression_heads_res34','tdt4265_init_weights_res34']
+#options = ['tdt4265','tdt4265_augmented']
+#options = ['tdt4265_updated_res34','tdt4265_updated_res101','tdt4265_deeper_regression_heads_res34']
+options = ['tdt4265','tdt4265_augmented','tdt4265_fpn_res34','tdt4265_focal_loss_res34', 'tdt4265_deeper_regression_heads_res34','tdt4265_init_weights_res34']
 #options = ['tdt4265_init_weights_res34','tdt4265_init_weights_res50', 'tdt4265_init_weights_res101']
 df['run'] = df["run"].apply(lambda x: x.replace("\\logs\\tensorboard", ""))
 
@@ -37,23 +37,41 @@ def PlotmAPTag(df, options, tag):
     plt.savefig(save_as_eps, bbox_inches="tight", dpi=200)
     plt.savefig(save_as_png, bbox_inches="tight", dpi=200)
     plt.show()
+
+def maxmAPvalToLatex(df):
+    df_metric = df[df['tag'].str.contains('metrics')].drop('step',axis=1)
+    df_loss = df[df['tag'].str.contains('loss')].drop('step',axis=1)
+    
+    grouped_df_metrics = df_metric.groupby('tag')
+    grouped_df_loss = df_loss.groupby('tag')
+    print(grouped_df_loss.min().to_latex())
+    print('------------------------------------------')
+    print(grouped_df_metrics.max().to_latex())
+    #grouped_df_metrics = grouped_df[grouped_df['tag'].contains('metrics')]
+    #maximums_metrics = grouped_df_metrics.max()
+    #min_loss = grouped_df_loss.min()
+    #print(min_loss.to_latex(index=False))
+    
+    #print(maximums_metrics.to_latex(index=False))
+    
+#maxmAPvalToLatex(df_runs)
 #options = ['tdt4265']
-PlotmAPTag(df, options, 'metrics/AP_person')
+#PlotmAPTag(df, options, 'metrics/AP_person')
 #df_loss = df[df['tag']=='loss/']
 #
 
-#df_loss = df_runs.loc[df_runs.tag.str.contains('loss')]
+df_loss = df_runs.loc[df_runs.tag.str.contains('loss')]
 
 
-#df_map_runs = df_map.loc[df_map['run'].isin(options)]
-#df_loss_runs = df_loss.loc[df_loss['run'].isin(options)]
+df_map_runs = df_map.loc[df_map['run'].isin(options)]
+df_loss_runs = df_loss.loc[df_loss['run'].isin(options)]
 
 #sns.relplot(data=df_loss, x="step", y="value", hue='run', col='tag', kind='line')
 #plt.ylim(0,10)
-#sns.lineplot(data=df_map, x="step", y="value", hue='run').set_title("mAP@0.5:0.95")
-#figure = plt.gcf()
+sns.lineplot(data=df_map, x="step", y="value", hue='run').set_title("mAP@0.5:0.95")
+figure = plt.gcf()
 
-#figure.set_size_inches(12, 8)
-#plt.savefig('./dataset_exploration/tdt4265andaugmented_map.png',bbox_inches="tight", dpi=200)
-#plt.savefig('./dataset_exploration/tdt4265andaugmented_map.eps',bbox_inches="tight", dpi=200)
-#plt.show()
+figure.set_size_inches(12, 8)
+plt.savefig('./dataset_exploration/all_2_3.png',bbox_inches="tight", dpi=200)
+plt.savefig('./dataset_exploration/all_2_3.eps',bbox_inches="tight", dpi=200)
+plt.show()
