@@ -9,7 +9,9 @@ from torchvision.ops.feature_pyramid_network import FeaturePyramidNetwork
 from typing import Tuple, List
 from torch import nn
 
-
+from pytorch_grad_cam import GradCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image
 
 # MaskRCNN requires a backbone with an attached FPN
 class ResnetWithFPN(torch.nn.Module):
@@ -36,7 +38,7 @@ class ResnetWithFPN(torch.nn.Module):
         # else:
         #     raise NotImplementedError("Only resnet50, resnet101, and resnet152 are supported")
 
-        
+
 
 
 
@@ -91,7 +93,8 @@ class ResnetWithFPN(torch.nn.Module):
         # self.out_channels = [256, 256, 256, 256, 64, 64]
         print("############################################################")
     def forward(self, x):
-
+        # print("x: ", x.shape)
+        # exit()
         features = []
         x = self.body(x)
         #print(x["3"].shape)
@@ -106,8 +109,8 @@ class ResnetWithFPN(torch.nn.Module):
         #print("\n finishe extras \n")
 
         x = self.fpn(x)
-        #for i in range(6):
-           # print(x[f"{i}"].shape)
+        # for i in range(6):
+        #    print("fpn output: ", x[f"{i}"].shape)
 
         features.extend(x.values() )
         out_features = tuple(features)
@@ -123,10 +126,33 @@ class ResnetWithFPN(torch.nn.Module):
         #         f"Expected shape: {expected_shape}, got: {feature.items().shape[1:]} at output IDX: {idx}"
         # assert len(out_features) == len(self.output_feature_shape),\
         #     f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
-        
+        # exit()
         #print(out_features)
+
+        # print(tuple(x.values())[0].shape)
+        # exit()
         return tuple(x.values())
 
+    # def reshape_transform(x, model):
 
+    #     # target_size = x['feat3'].size()[-2 : ]
+    #     target_layers = [model.layer4[-1]]
+    #     input_tensor = # Create an input tensor image for your model..
+    #     # Note: input_tensor can be a batch tensor with several images!
+
+    #     cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
+
+    #     grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
+
+    #     grayscale_cam = grayscale_cam[0, :]
+    #     visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+
+
+    #     activations = []
+    #     for key, value in x.items():
+    #         activations.append(torch.nn.functional.interpolate(torch.abs(value), target_size, mode='bilinear'))
+    #     activations = torch.cat(activations, axis=1)
+
+    #     return activations
 
 # Now we can build our model!
