@@ -13,12 +13,12 @@ We have only adapted the code to work with the rest of our model.
 
 """
 
-class DepthwiseSeparableConvLayer(nn.Module):
+class DepthwiseConv(nn.Module):
     """
-    Depthwise separable convolution 
+    Depthwise separable convolution, as expleind on page 4 section 3.3 in the paper
     """
     def __init__(self, in_channels, out_channels=None, kernel_size=1, stride=1, padding=0):
-        super(DepthwiseSeparableConvLayer,self).__init__()
+        super(DepthwiseConv,self).__init__()
 
         if out_channels == None:
             out_channels = in_channels
@@ -36,10 +36,7 @@ class DepthwiseSeparableConvLayer(nn.Module):
 
 
 class ConvLayer(nn.Module):
-    """
-    Convolution block, with batch normalization and ReLU activation.
-    Used to construct p3-p8.
-    """
+    
     def __init__(self, in_channels, out_channels=None, kernel_size=1, stride=1, padding=0):
         super(ConvLayer,self).__init__()
 
@@ -65,20 +62,20 @@ class BiFPNLayer(nn.Module):
         super(BiFPNLayer, self).__init__()
         self.epsilon = epsilon
         
-        self.p3_td = DepthwiseSeparableConvLayer(feature_size)
-        self.p4_td = DepthwiseSeparableConvLayer(feature_size)
-        self.p5_td = DepthwiseSeparableConvLayer(feature_size)
-        self.p6_td = DepthwiseSeparableConvLayer(feature_size)
-        self.p7_td = DepthwiseSeparableConvLayer(feature_size)
+        self.p3_td =  DepthwiseConv(feature_size)
+        self.p4_td = DepthwiseConv(feature_size)
+        self.p5_td = DepthwiseConv(feature_size)
+        self.p6_td = DepthwiseConv(feature_size)
+        self.p7_td = DepthwiseConv(feature_size)
         
-        self.p4_out = DepthwiseSeparableConvLayer(feature_size)
-        self.p5_out = DepthwiseSeparableConvLayer(feature_size)
-        self.p6_out = DepthwiseSeparableConvLayer(feature_size)
-        self.p7_out = DepthwiseSeparableConvLayer(feature_size)
-        self.p8_out = DepthwiseSeparableConvLayer(feature_size)
+        self.p4_out = DepthwiseConv(feature_size)
+        self.p5_out = DepthwiseConv(feature_size)
+        self.p6_out = DepthwiseConv(feature_size)
+        self.p7_out = DepthwiseConv(feature_size)
+        self.p8_out = DepthwiseConv(feature_size)
         
         self.w1_td = torch.Tensor(2, 5)
-        nn.init.kaiming_uniform_(self.w1_td, nonlinearity='relu')
+        nn.init.kaiming_uniform_(self.w1_td, nonlinearity='relu')#
         self.w1_relu = nn.ReLU()
 
         self.w2_up = torch.Tensor(3, 5)
@@ -87,7 +84,7 @@ class BiFPNLayer(nn.Module):
     
     def forward(self, inputs):
         p3_x, p4_x, p5_x, p6_x, p7_x, p8_x = inputs
-        
+        #Fast normalized fusion
         w1_td = self.w1_relu(self.w1_td)
         w1_td /= torch.sum(w1_td, dim=0) + self.epsilon
 
@@ -97,6 +94,10 @@ class BiFPNLayer(nn.Module):
         
         #print(p7_x.shape)
         # Calculate Top-Down Pathway
+        #The top-down pathway is calculated by multiplying the feature maps of the previous layers with the corresponding weight matrix.
+        #The resulting feature maps are then concatenated and passed through a convolutional layer.
+        #exleind on page 4 section 3.3 in the paper
+
         p8_td = p8_x
         p7_td = self.p7_td(w1_td[0, 0] * p7_x + w1_td[1, 0] * F.interpolate(p8_td, scale_factor=2))
         p6_td = self.p6_td(w1_td[0, 1] * p6_x + w1_td[1, 1] * F.interpolate(p7_td, scale_factor=2))
@@ -164,22 +165,11 @@ class BiFPN(nn.Module):
 
         self.p6 = nn.Conv2d( in_channels_list[3], feature_size, kernel_size=1, stride=1, padding=0)
         self.p7 = nn.Conv2d(feature_size, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p7 = nn.Conv2d(feature_size, feature_size, kernel_size=1, stride=1, padding=0)
+        self.p8 = nn.Conv2d(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
         #self.p7 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-        self.p8 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1) #added a 6th layer in order to get the same output shape as the original model
+        #self.p8 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1) #added a 6th layer in order to get the same output shape as the original model
 
-        """
-        Testeing thisone
-        
-        """
-
-        # self.p3 = nn.Conv2d( feature_size, feature_size, kernel_size=1, stride=1, padding=0)
-        # self.p4 = nn.Conv2d( feature_size, feature_size, kernel_size=1, stride=1, padding=0)
-        # self.p5 = nn.Conv2d( feature_size, feature_size, kernel_size=1, stride=1, padding=0)
-
-        # self.p6 = nn.Conv2d( feature_size, feature_size, kernel_size=1, stride=1, padding=0)
-        # self.p7 = nn.Conv2d(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-        # #self.p7 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
-        # self.p8 = ConvLayer(feature_size, feature_size, kernel_size=3, stride=2, padding=1)
         
 
         self.extras = nn.ModuleList([
